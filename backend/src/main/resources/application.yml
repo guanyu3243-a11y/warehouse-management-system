@@ -4,11 +4,14 @@ server:
 spring:
   application:
     name: warehouse-management-backend
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:warehouse_management}?useUnicode=true&characterEncoding=utf8&serverTimezone=Europe/London&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
 
 mybatis-plus:
+  type-aliases-package: com.warehouse.management.entity
   configuration:
     map-underscore-to-camel-case: true
   global-config:
