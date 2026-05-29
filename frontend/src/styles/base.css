@@ -1,0 +1,66 @@
+:root {
+  font-family:
+    Inter, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  color: #1f2933;
+  background: #f4f6f5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --wms-accent: #0f766e;
+  --wms-accent-strong: #115e59;
+  --wms-ink: #1f2933;
+  --wms-muted: #6b7280;
+  --wms-border: #d9e2df;
+  --wms-surface: #ffffff;
+  --wms-warning: #b45309;
+  --wms-danger: #b42318;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: #f4f6f5;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.page {
+  width: 100%;
+  padding: 24px;
+}
+
+.page-panel {
+  border: 1px solid var(--wms-border);
+  border-radius: 8px;
+  background: var(--wms-surface);
+}
+
+.text-muted {
+  color: var(--wms-muted);
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 16px;
+  }
+}
