@@ -34,6 +34,17 @@ public class StockController {
         return ApiResponse.success(stockService.page(page, size, warehouseId, categoryId, keyword, lowStockOnly));
     }
 
+    @GetMapping("/low")
+    public ApiResponse<PageResponse<StockResponse>> lowStock(
+            @RequestParam(defaultValue = "1") long page,
+            @RequestParam(defaultValue = "10") long size,
+            @RequestParam(required = false) Long warehouseId,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String keyword
+    ) {
+        return ApiResponse.success(stockService.page(page, size, warehouseId, categoryId, keyword, true));
+    }
+
     @GetMapping("/product/{productId}")
     public ApiResponse<List<StockResponse>> getByProductId(@PathVariable Long productId) {
         return ApiResponse.success(stockService.getByProductId(productId));

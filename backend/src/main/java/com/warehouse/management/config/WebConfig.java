@@ -9,13 +9,25 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final JwtAuthInterceptor jwtAuthInterceptor;
 
-    public WebConfig(JwtAuthInterceptor jwtAuthInterceptor) {
+    private final OperationLogInterceptor operationLogInterceptor;
+
+    public WebConfig(JwtAuthInterceptor jwtAuthInterceptor, OperationLogInterceptor operationLogInterceptor) {
         this.jwtAuthInterceptor = jwtAuthInterceptor;
+        this.operationLogInterceptor = operationLogInterceptor;
     }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(jwtAuthInterceptor)
+                .addPathPatterns("/api/**")
+                .excludePathPatterns(
+                        "/api/auth/register",
+                        "/api/auth/login",
+                        "/api/health",
+                        "/error"
+                );
+
+        registry.addInterceptor(operationLogInterceptor)
                 .addPathPatterns("/api/**")
                 .excludePathPatterns(
                         "/api/auth/register",

@@ -11,6 +11,10 @@ public final class CurrentUserContext {
         HOLDER.set(currentUser);
     }
 
+    public static CurrentUser get() {
+        return HOLDER.get();
+    }
+
     public static CurrentUser getRequired() {
         CurrentUser currentUser = HOLDER.get();
         if (currentUser == null) {

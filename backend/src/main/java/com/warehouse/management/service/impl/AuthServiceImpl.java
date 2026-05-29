@@ -9,6 +9,7 @@ import com.warehouse.management.dto.AuthUserResponse;
 import com.warehouse.management.entity.User;
 import com.warehouse.management.mapper.UserMapper;
 import com.warehouse.management.service.AuthService;
+import com.warehouse.management.service.OperationLogService;
 import com.warehouse.management.util.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,10 +29,18 @@ public class AuthServiceImpl implements AuthService {
 
     private final JwtUtil jwtUtil;
 
-    public AuthServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    private final OperationLogService operationLogService;
+
+    public AuthServiceImpl(
+            UserMapper userMapper,
+            PasswordEncoder passwordEncoder,
+            JwtUtil jwtUtil,
+            OperationLogService operationLogService
+    ) {
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.operationLogService = operationLogService;
     }
 
     @Override
@@ -52,6 +61,15 @@ public class AuthServiceImpl implements AuthService {
         user.setRole(DEFAULT_ROLE);
         user.setStatus(ACTIVE_STATUS);
         userMapper.insert(user);
+        operationLogService.record(
+                user.getId(),
+                "AUTH",
+                "REGISTER",
+                "POST",
+                "/api/auth/register",
+                null,
+                "User registered"
+        );
         return toUserResponse(user);
     }
 
@@ -68,6 +86,15 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String token = jwtUtil.generateToken(user);
+        operationLogService.record(
+                user.getId(),
+                "AUTH",
+                "LOGIN",
+                "POST",
+                "/api/auth/login",
+                null,
+                "User logged in"
+        );
         return new AuthLoginResponse(
                 token,
                 "Bearer",
