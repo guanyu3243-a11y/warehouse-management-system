@@ -1,0 +1,165 @@
+package com.warehouse.management.service.impl;
+
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.warehouse.management.common.BusinessException;
+import com.warehouse.management.dto.PageResponse;
+import com.warehouse.management.dto.StockResponse;
+import com.warehouse.management.entity.Product;
+import com.warehouse.management.entity.Stock;
+import com.warehouse.management.entity.Warehouse;
+import com.warehouse.management.mapper.ProductMapper;
+import com.warehouse.management.mapper.StockMapper;
+import com.warehouse.management.mapper.WarehouseMapper;
+import com.warehouse.management.service.StockService;
+import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+@Service
+public class StockServiceImpl implements StockService {
+
+    private final StockMapper stockMapper;
+
+    private final ProductMapper productMapper;
+
+    private final WarehouseMapper warehouseMapper;
+
+    public StockServiceImpl(StockMapper stockMapper, ProductMapper productMapper, WarehouseMapper warehouseMapper) {
+        this.stockMapper = stockMapper;
+        this.productMapper = productMapper;
+        this.warehouseMapper = warehouseMapper;
+    }
+
+    @Override
+    public PageResponse<StockResponse> page(
+            long page,
+            long size,
+            Long warehouseId,
+            Long categoryId,
+            String keyword,
+            Boolean lowStockOnly
+    ) {
+        List<StockResponse> filtered = loadStockResponses(warehouseId).stream()
+                .filter(stock -> categoryId == null || categoryId.equals(stock.categoryId()))
+                .filter(stock -> !hasText(keyword) || matchesKeyword(stock, keyword.trim()))
+                .filter(stock -> !Boolean.TRUE.equals(lowStockOnly) || Boolean.TRUE.equals(stock.lowStock()))
+                .toList();
+
+        long normalizedPage = normalizePage(page);
+        long normalizedSize = normalizeSize(size);
+        int fromIndex = (int) Math.min((normalizedPage - 1) * normalizedSize, filtered.size());
+        int toIndex = (int) Math.min(fromIndex + normalizedSize, filtered.size());
+
+        return new PageResponse<>(
+                filtered.subList(fromIndex, toIndex),
+                filtered.size(),
+                normalizedPage,
+                normalizedSize
+        );
+    }
+
+    @Override
+    public List<StockResponse> getByProductId(Long productId) {
+        Product product = productMapper.selectById(productId);
+        if (product == null) {
+            throw BusinessException.notFound("Product does not exist");
+        }
+        return loadStockResponses(null).stream()
+                .filter(stock -> productId.equals(stock.productId()))
+                .toList();
+    }
+
+    private List<StockResponse> loadStockResponses(Long warehouseId) {
+        List<Stock> stocks = stockMapper.selectList(
+                Wrappers.<Stock>lambdaQuery()
+                        .eq(warehouseId != null, Stock::getWarehouseId, warehouseId)
+                        .orderByDesc(Stock::getUpdatedAt)
+        );
+        if (stocks.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Product> productMap = selectProductMap(stocks);
+        Map<Long, Warehouse> warehouseMap = selectWarehouseMap(stocks);
+
+        return stocks.stream()
+                .map(stock -> toResponse(stock, productMap.get(stock.getProductId()), warehouseMap.get(stock.getWarehouseId())))
+                .toList();
+    }
+
+    private Map<Long, Product> selectProductMap(List<Stock> stocks) {
+        Set<Long> productIds = stocks.stream().map(Stock::getProductId).collect(Collectors.toSet());
+        if (productIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return productMapper.selectBatchIds(productIds).stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+    }
+
+    private Map<Long, Warehouse> selectWarehouseMap(List<Stock> stocks) {
+        Set<Long> warehouseIds = stocks.stream().map(Stock::getWarehouseId).collect(Collectors.toSet());
+        if (warehouseIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return warehouseMapper.selectBatchIds(warehouseIds).stream()
+                .collect(Collectors.toMap(Warehouse::getId, Function.identity()));
+    }
+
+    private StockResponse toResponse(Stock stock, Product product, Warehouse warehouse) {
+        int quantity = defaultInt(stock.getQuantity());
+        int lockedQuantity = defaultInt(stock.getLockedQuantity());
+        int availableQuantity = quantity - lockedQuantity;
+        int lowStockThreshold = product == null ? 0 : defaultInt(product.getLowStockThreshold());
+
+        return new StockResponse(
+                stock.getId(),
+                stock.getProductId(),
+                product == null ? null : product.getSku(),
+                product == null ? null : product.getName(),
+                product == null ? null : product.getCategoryId(),
+                stock.getWarehouseId(),
+                warehouse == null ? null : warehouse.getName(),
+                quantity,
+                lockedQuantity,
+                availableQuantity,
+                lowStockThreshold,
+                availableQuantity <= lowStockThreshold,
+                stock.getCreatedAt(),
+                stock.getUpdatedAt()
+        );
+    }
+
+    private boolean matchesKeyword(StockResponse stock, String keyword) {
+        return contains(stock.sku(), keyword)
+                || contains(stock.productName(), keyword)
+                || contains(stock.warehouseName(), keyword);
+    }
+
+    private boolean contains(String value, String keyword) {
+        return value != null && value.contains(keyword);
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
+    private int defaultInt(Integer value) {
+        return value == null ? 0 : value;
+    }
+
+    private long normalizePage(long page) {
+        return Math.max(page, 1);
+    }
+
+    private long normalizeSize(long size) {
+        if (size < 1) {
+            return 10;
+        }
+        return Math.min(size, 100);
+    }
+}
