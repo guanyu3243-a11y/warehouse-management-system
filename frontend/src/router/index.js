@@ -33,7 +33,7 @@ const routes = [
       {
         path: 'categories',
         name: 'categories',
-        component: () => import('@/views/PlaceholderView.vue'),
+        component: () => import('@/views/master-data/CategoryView.vue'),
         meta: {
           title: '商品分类'
         }
@@ -41,7 +41,7 @@ const routes = [
       {
         path: 'products',
         name: 'products',
-        component: () => import('@/views/PlaceholderView.vue'),
+        component: () => import('@/views/master-data/ProductView.vue'),
         meta: {
           title: '服装商品'
         }
@@ -49,7 +49,7 @@ const routes = [
       {
         path: 'warehouses',
         name: 'warehouses',
-        component: () => import('@/views/PlaceholderView.vue'),
+        component: () => import('@/views/master-data/WarehouseView.vue'),
         meta: {
           title: '仓库管理'
         }
@@ -57,7 +57,7 @@ const routes = [
       {
         path: 'suppliers',
         name: 'suppliers',
-        component: () => import('@/views/PlaceholderView.vue'),
+        component: () => import('@/views/master-data/SupplierView.vue'),
         meta: {
           title: '供应商管理'
         }
@@ -65,7 +65,7 @@ const routes = [
       {
         path: 'stock-in',
         name: 'stock-in',
-        component: () => import('@/views/PlaceholderView.vue'),
+        component: () => import('@/views/documents/StockInView.vue'),
         meta: {
           title: '入库管理'
         }
@@ -73,7 +73,7 @@ const routes = [
       {
         path: 'stock-out',
         name: 'stock-out',
-        component: () => import('@/views/PlaceholderView.vue'),
+        component: () => import('@/views/documents/StockOutView.vue'),
         meta: {
           title: '出库管理'
         }
@@ -81,7 +81,7 @@ const routes = [
       {
         path: 'stock',
         name: 'stock',
-        component: () => import('@/views/PlaceholderView.vue'),
+        component: () => import('@/views/stock/StockView.vue'),
         meta: {
           title: '库存查询'
         }
@@ -89,7 +89,7 @@ const routes = [
       {
         path: 'low-stock',
         name: 'low-stock',
-        component: () => import('@/views/PlaceholderView.vue'),
+        component: () => import('@/views/stock/StockView.vue'),
         meta: {
           title: '低库存预警'
         }
@@ -97,7 +97,7 @@ const routes = [
       {
         path: 'operation-logs',
         name: 'operation-logs',
-        component: () => import('@/views/PlaceholderView.vue'),
+        component: () => import('@/views/logs/OperationLogsView.vue'),
         meta: {
           title: '操作日志'
         }
