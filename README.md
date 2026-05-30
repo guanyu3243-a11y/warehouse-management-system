@@ -219,6 +219,10 @@ GET  /api/suppliers
 
 GET  /api/stock
 GET  /api/stock/low
+GET  /api/stock-movements
+GET  /api/stock-movements/{id}
+GET  /api/stock-movements/product/{productId}
+GET  /api/stock-movements/warehouse/{warehouseId}
 
 GET  /api/stock-in
 POST /api/stock-in

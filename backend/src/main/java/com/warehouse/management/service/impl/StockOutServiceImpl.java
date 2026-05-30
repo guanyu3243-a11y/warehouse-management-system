@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.warehouse.management.common.BusinessException;
 import com.warehouse.management.common.CurrentUserContext;
 import com.warehouse.management.dto.PageResponse;
+import com.warehouse.management.dto.StockMovementRecordCommand;
 import com.warehouse.management.dto.StockOutItemRequest;
 import com.warehouse.management.dto.StockOutItemResponse;
 import com.warehouse.management.dto.StockOutRequest;
@@ -21,6 +22,7 @@ import com.warehouse.management.mapper.StockMapper;
 import com.warehouse.management.mapper.StockOutItemMapper;
 import com.warehouse.management.mapper.StockOutMapper;
 import com.warehouse.management.mapper.WarehouseMapper;
+import com.warehouse.management.service.StockMovementService;
 import com.warehouse.management.service.StockOutService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,18 +59,22 @@ public class StockOutServiceImpl implements StockOutService {
 
     private final WarehouseMapper warehouseMapper;
 
+    private final StockMovementService stockMovementService;
+
     public StockOutServiceImpl(
             StockOutMapper stockOutMapper,
             StockOutItemMapper stockOutItemMapper,
             StockMapper stockMapper,
             ProductMapper productMapper,
-            WarehouseMapper warehouseMapper
+            WarehouseMapper warehouseMapper,
+            StockMovementService stockMovementService
     ) {
         this.stockOutMapper = stockOutMapper;
         this.stockOutItemMapper = stockOutItemMapper;
         this.stockMapper = stockMapper;
         this.productMapper = productMapper;
         this.warehouseMapper = warehouseMapper;
+        this.stockMovementService = stockMovementService;
     }
 
     @Override
@@ -137,7 +143,7 @@ public class StockOutServiceImpl implements StockOutService {
         }
 
         for (StockOutItem item : items) {
-            decreaseStock(stockOut.getWarehouseId(), item.getProductId(), item.getQuantity());
+            decreaseStock(stockOut, item);
         }
 
         stockOut.setStatus(CONFIRMED_STATUS);
@@ -156,18 +162,36 @@ public class StockOutServiceImpl implements StockOutService {
         return toResponse(stockOut, true);
     }
 
-    private void decreaseStock(Long warehouseId, Long productId, Integer quantity) {
+    private void decreaseStock(StockOut stockOut, StockOutItem item) {
         Stock stock = stockMapper.selectOne(
                 Wrappers.<Stock>lambdaQuery()
-                        .eq(Stock::getWarehouseId, warehouseId)
-                        .eq(Stock::getProductId, productId)
+                        .eq(Stock::getWarehouseId, stockOut.getWarehouseId())
+                        .eq(Stock::getProductId, item.getProductId())
         );
-        if (stock == null || defaultInt(stock.getQuantity()) < quantity) {
-            throw BusinessException.badRequest("Insufficient stock for product id " + productId);
+        int quantityBefore = stock == null ? 0 : defaultInt(stock.getQuantity());
+        int changeQuantity = -item.getQuantity();
+        int quantityAfter = quantityBefore + changeQuantity;
+
+        if (stock == null || quantityAfter < 0) {
+            throw BusinessException.badRequest("Insufficient stock for product id " + item.getProductId());
         }
 
-        stock.setQuantity(defaultInt(stock.getQuantity()) - quantity);
+        stock.setQuantity(quantityAfter);
         stockMapper.updateById(stock);
+
+        stockMovementService.record(new StockMovementRecordCommand(
+                item.getProductId(),
+                stockOut.getWarehouseId(),
+                "STOCK_OUT",
+                "STOCK_OUT",
+                stockOut.getId(),
+                stockOut.getStockOutNo(),
+                quantityBefore,
+                changeQuantity,
+                quantityAfter,
+                stockOut.getOperatorId(),
+                movementRemark(stockOut.getRemark(), item.getRemark())
+        ));
     }
 
     private void validateRequest(StockOutRequest request) {
@@ -300,6 +324,13 @@ public class StockOutServiceImpl implements StockOutService {
 
     private String trimToNull(String value) {
         return hasText(value) ? value.trim() : null;
+    }
+
+    private String movementRemark(String documentRemark, String itemRemark) {
+        if (hasText(itemRemark)) {
+            return itemRemark.trim();
+        }
+        return trimToNull(documentRemark);
     }
 
     private long normalizePage(long page) {

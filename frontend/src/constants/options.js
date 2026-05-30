@@ -38,6 +38,7 @@ export const operationModuleOptions = [
   'STOCK_IN',
   'STOCK_OUT',
   'STOCK',
+  'STOCK_MOVEMENT',
   'DASHBOARD',
   'OPERATION_LOG'
 ]
@@ -64,3 +65,36 @@ export function statusLabel(options, value) {
 export function statusType(options, value) {
   return findOption(options, value)?.type || 'info'
 }
+
+export const stockMovementTypeOptions = [
+  {
+    label: '入库',
+    value: 'STOCK_IN',
+    type: 'success'
+  },
+  {
+    label: '出库',
+    value: 'STOCK_OUT',
+    type: 'warning'
+  },
+  {
+    label: '库存调整',
+    value: 'ADJUSTMENT',
+    type: 'primary'
+  },
+  {
+    label: '调拨入库',
+    value: 'TRANSFER_IN',
+    type: 'success'
+  },
+  {
+    label: '调拨出库',
+    value: 'TRANSFER_OUT',
+    type: 'warning'
+  },
+  {
+    label: '库存盘点',
+    value: 'STOCK_TAKE',
+    type: 'info'
+  }
+]

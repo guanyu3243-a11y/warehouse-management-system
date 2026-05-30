@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.warehouse.management.common.BusinessException;
 import com.warehouse.management.common.CurrentUserContext;
 import com.warehouse.management.dto.PageResponse;
+import com.warehouse.management.dto.StockMovementRecordCommand;
 import com.warehouse.management.dto.StockInItemRequest;
 import com.warehouse.management.dto.StockInItemResponse;
 import com.warehouse.management.dto.StockInRequest;
@@ -24,6 +25,7 @@ import com.warehouse.management.mapper.StockMapper;
 import com.warehouse.management.mapper.SupplierMapper;
 import com.warehouse.management.mapper.WarehouseMapper;
 import com.warehouse.management.service.StockInService;
+import com.warehouse.management.service.StockMovementService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,13 +63,16 @@ public class StockInServiceImpl implements StockInService {
 
     private final SupplierMapper supplierMapper;
 
+    private final StockMovementService stockMovementService;
+
     public StockInServiceImpl(
             StockInMapper stockInMapper,
             StockInItemMapper stockInItemMapper,
             StockMapper stockMapper,
             ProductMapper productMapper,
             WarehouseMapper warehouseMapper,
-            SupplierMapper supplierMapper
+            SupplierMapper supplierMapper,
+            StockMovementService stockMovementService
     ) {
         this.stockInMapper = stockInMapper;
         this.stockInItemMapper = stockInItemMapper;
@@ -75,6 +80,7 @@ public class StockInServiceImpl implements StockInService {
         this.productMapper = productMapper;
         this.warehouseMapper = warehouseMapper;
         this.supplierMapper = supplierMapper;
+        this.stockMovementService = stockMovementService;
     }
 
     @Override
@@ -144,7 +150,7 @@ public class StockInServiceImpl implements StockInService {
         }
 
         for (StockInItem item : items) {
-            increaseStock(stockIn.getWarehouseId(), item.getProductId(), item.getQuantity());
+            increaseStock(stockIn, item);
         }
 
         stockIn.setStatus(CONFIRMED_STATUS);
@@ -163,24 +169,41 @@ public class StockInServiceImpl implements StockInService {
         return toResponse(stockIn, true);
     }
 
-    private void increaseStock(Long warehouseId, Long productId, Integer quantity) {
+    private void increaseStock(StockIn stockIn, StockInItem item) {
         Stock stock = stockMapper.selectOne(
                 Wrappers.<Stock>lambdaQuery()
-                        .eq(Stock::getWarehouseId, warehouseId)
-                        .eq(Stock::getProductId, productId)
+                        .eq(Stock::getWarehouseId, stockIn.getWarehouseId())
+                        .eq(Stock::getProductId, item.getProductId())
         );
+        int quantityBefore = stock == null ? 0 : defaultInt(stock.getQuantity());
+        int changeQuantity = item.getQuantity();
+        int quantityAfter = quantityBefore + changeQuantity;
+
         if (stock == null) {
             stock = new Stock();
-            stock.setWarehouseId(warehouseId);
-            stock.setProductId(productId);
-            stock.setQuantity(quantity);
+            stock.setWarehouseId(stockIn.getWarehouseId());
+            stock.setProductId(item.getProductId());
+            stock.setQuantity(quantityAfter);
             stock.setLockedQuantity(0);
             stockMapper.insert(stock);
-            return;
+        } else {
+            stock.setQuantity(quantityAfter);
+            stockMapper.updateById(stock);
         }
 
-        stock.setQuantity(defaultInt(stock.getQuantity()) + quantity);
-        stockMapper.updateById(stock);
+        stockMovementService.record(new StockMovementRecordCommand(
+                item.getProductId(),
+                stockIn.getWarehouseId(),
+                "STOCK_IN",
+                "STOCK_IN",
+                stockIn.getId(),
+                stockIn.getStockInNo(),
+                quantityBefore,
+                changeQuantity,
+                quantityAfter,
+                stockIn.getOperatorId(),
+                movementRemark(stockIn.getRemark(), item.getRemark())
+        ));
     }
 
     private void validateRequest(StockInRequest request) {
@@ -322,6 +345,13 @@ public class StockInServiceImpl implements StockInService {
 
     private String trimToNull(String value) {
         return hasText(value) ? value.trim() : null;
+    }
+
+    private String movementRemark(String documentRemark, String itemRemark) {
+        if (hasText(itemRemark)) {
+            return itemRemark.trim();
+        }
+        return trimToNull(documentRemark);
     }
 
     private long normalizePage(long page) {

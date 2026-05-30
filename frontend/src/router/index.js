@@ -135,6 +135,15 @@ const routes = [
         }
       },
       {
+        path: 'stock-movements',
+        name: 'stock-movements',
+        component: () => import('@/views/stock/StockMovementList.vue'),
+        meta: {
+          title: '库存流水',
+          permission: 'stock-movement:view'
+        }
+      },
+      {
         path: 'operation-logs',
         name: 'operation-logs',
         component: () => import('@/views/logs/OperationLogsView.vue'),

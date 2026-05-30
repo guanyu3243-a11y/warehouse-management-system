@@ -69,6 +69,27 @@ export const stockApi = {
   }
 }
 
+export const stockMovementApi = {
+  page(params) {
+    return http.get('/stock-movements', {
+      params: cleanParams(params)
+    })
+  },
+  detail(id) {
+    return http.get(`/stock-movements/${id}`)
+  },
+  byProduct(productId, params) {
+    return http.get(`/stock-movements/product/${productId}`, {
+      params: cleanParams(params)
+    })
+  },
+  byWarehouse(warehouseId, params) {
+    return http.get(`/stock-movements/warehouse/${warehouseId}`, {
+      params: cleanParams(params)
+    })
+  }
+}
+
 function createDocumentApi(basePath) {
   return {
     page(params) {

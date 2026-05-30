@@ -69,6 +69,10 @@
           <ElIcon><Warning /></ElIcon>
           <template #title>低库存预警</template>
         </ElMenuItem>
+        <ElMenuItem v-if="can('stock-movement:view')" index="/stock-movements">
+          <ElIcon><List /></ElIcon>
+          <template #title>库存流水</template>
+        </ElMenuItem>
         <ElMenuItem v-if="can('operation-log:view')" index="/operation-logs">
           <ElIcon><Tickets /></ElIcon>
           <template #title>操作日志</template>
@@ -129,6 +133,7 @@ import {
   Fold,
   Goods,
   House,
+  List,
   Lock,
   OfficeBuilding,
   Setting,
