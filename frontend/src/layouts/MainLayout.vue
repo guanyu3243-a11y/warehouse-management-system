@@ -35,6 +35,10 @@
           <ElIcon><Van /></ElIcon>
           <template #title>供应商管理</template>
         </ElMenuItem>
+        <ElMenuItem v-if="authStore.isAdmin" index="/users">
+          <ElIcon><User /></ElIcon>
+          <template #title>用户管理</template>
+        </ElMenuItem>
         <ElMenuItem index="/stock-in">
           <ElIcon><Download /></ElIcon>
           <template #title>入库管理</template>
@@ -115,6 +119,7 @@ import {
   SwitchButton,
   Tickets,
   Upload,
+  User,
   Van,
   Warning
 } from '@element-plus/icons-vue'

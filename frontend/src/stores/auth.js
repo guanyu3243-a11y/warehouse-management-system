@@ -25,7 +25,8 @@ export const useAuthStore = defineStore('auth', {
       }
 
       return roleMap[state.user?.role] || state.user?.role || '未登录'
-    }
+    },
+    isAdmin: (state) => state.user?.role === 'ADMIN'
   },
   actions: {
     async login(form) {

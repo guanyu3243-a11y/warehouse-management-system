@@ -6,9 +6,17 @@ spring:
     name: warehouse-management-backend
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:warehouse_management}?useUnicode=true&characterEncoding=utf8&serverTimezone=Europe/London&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:warehouse_management}?useUnicode=true&characterEncoding=utf8&serverTimezone=Europe/London&useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:}
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+  sql:
+    init:
+      mode: never
 
 mybatis-plus:
   type-aliases-package: com.warehouse.management.entity
@@ -21,3 +29,7 @@ app:
   jwt:
     secret: ${JWT_SECRET:warehouse-management-system-secret-key-change-me-2026}
     expiration-hours: ${JWT_EXPIRATION_HOURS:24}
+
+logging:
+  pattern:
+    level: "%5p [requestId:%X{requestId:-}]"

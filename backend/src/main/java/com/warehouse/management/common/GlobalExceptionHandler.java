@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException exception) {
         return ResponseEntity
                 .status(exception.getHttpStatus())
-                .body(ApiResponse.failure(exception.getCode(), exception.getMessage()));
+                .body(ApiResponse.failure(exception.getErrorCode(), exception.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
         String message = fieldError == null ? "Invalid request parameters" : fieldError.getDefaultMessage();
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.failure(400, message));
+                .body(ApiResponse.failure(ErrorCode.VALIDATION_FAILED, message));
     }
 
     @ExceptionHandler(DataAccessException.class)
@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.failure(
-                        500,
+                        ErrorCode.DATABASE_ERROR,
                         "Database access failed. Please check MySQL connection, credentials, and schema."
                 ));
     }
@@ -47,6 +47,6 @@ public class GlobalExceptionHandler {
         log.error("Unexpected server error", exception);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.failure(500, "Internal server error"));
+                .body(ApiResponse.failure(ErrorCode.INTERNAL_ERROR, "Internal server error"));
     }
 }

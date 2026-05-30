@@ -1,0 +1,7 @@
+spring:
+  flyway:
+    enabled: false
+
+logging:
+  level:
+    com.warehouse.management: info

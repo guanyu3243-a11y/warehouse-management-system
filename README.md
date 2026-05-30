@@ -30,6 +30,7 @@
 |   +-- src/main/java/com/warehouse/management
 |   +-- src/main/resources/application.yml
 |   +-- src/main/resources/db/schema.sql
+|   +-- src/main/resources/db/migration
 |   +-- src/test/java/com/warehouse/management
 |   +-- pom.xml
 +-- frontend
@@ -44,6 +45,8 @@
 |   +-- api-design.md
 |   +-- database-design.md
 |   +-- development-plan.md
+|   +-- enterprise-upgrade-development-plan.md
+|   +-- environment-config.md
 |   +-- requirements.md
 +-- README.md
 ```
@@ -51,6 +54,7 @@
 ## 核心功能
 
 - 用户注册、登录、JWT 认证、当前用户查询
+- 用户管理和 ADMIN 权限控制
 - 商品分类管理
 - 服装商品管理
 - 仓库管理
@@ -64,7 +68,15 @@
 
 ## 数据库初始化
 
-确认本地已经启动 MySQL，然后执行初始化脚本：
+项目已经引入 Flyway 作为数据库迁移工具。正常启动后端时，Flyway 会自动执行：
+
+```text
+backend/src/main/resources/db/migration/V1__init_schema.sql
+```
+
+如果是已有数据库，`baseline-on-migrate` 会记录当前基线，避免重复建表。
+
+`schema.sql` 暂时保留为手动初始化参考。需要手动初始化时，可以执行：
 
 ```bash
 mysql -u root -p < backend/src/main/resources/db/schema.sql
@@ -86,6 +98,13 @@ DB_USERNAME=root
 DB_PASSWORD=
 JWT_SECRET=warehouse-management-system-secret-key-change-me-2026
 JWT_EXPIRATION_HOURS=24
+FLYWAY_ENABLED=true
+```
+
+更多环境说明见：
+
+```text
+docs/environment-config.md
 ```
 
 ## 启动后端
@@ -166,6 +185,13 @@ POST /api/auth/register
 POST /api/auth/login
 GET  /api/auth/me
 
+GET  /api/users
+POST /api/users
+PUT  /api/users/{id}
+PUT  /api/users/{id}/password
+PUT  /api/users/{id}/status
+DELETE /api/users/{id}
+
 GET  /api/categories
 GET  /api/products
 GET  /api/warehouses
@@ -195,6 +221,12 @@ GET  /api/operation-logs
 
 ```text
 Authorization: Bearer <token>
+```
+
+后端会在每次响应中返回请求追踪头，便于排查日志：
+
+```text
+X-Request-Id: <request-id>
 ```
 
 ## 验证命令

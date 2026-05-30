@@ -14,6 +14,12 @@ function redirectToLogin() {
   }
 }
 
+function redirectToForbidden() {
+  if (!['/login', '/403'].includes(window.location.pathname)) {
+    window.location.assign('/403')
+  }
+}
+
 http.interceptors.request.use((config) => {
   const token = getToken()
 
@@ -38,6 +44,10 @@ http.interceptors.response.use(
         redirectToLogin()
       }
 
+      if (payload.code === 403) {
+        redirectToForbidden()
+      }
+
       ElMessage.error(payload.message || '请求失败')
       return Promise.reject(new Error(payload.message || '请求失败'))
     }
@@ -53,6 +63,10 @@ http.interceptors.response.use(
     if (status === 401) {
       clearAuthStorage()
       redirectToLogin()
+    }
+
+    if (status === 403) {
+      redirectToForbidden()
     }
 
     ElMessage.error(message)

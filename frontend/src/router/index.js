@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { ElMessage } from 'element-plus'
 
 import MainLayout from '@/layouts/MainLayout.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -63,6 +64,15 @@ const routes = [
         }
       },
       {
+        path: 'users',
+        name: 'users',
+        component: () => import('@/views/user/UserList.vue'),
+        meta: {
+          title: '用户管理',
+          adminOnly: true
+        }
+      },
+      {
         path: 'stock-in',
         name: 'stock-in',
         component: () => import('@/views/documents/StockInView.vue'),
@@ -101,12 +111,24 @@ const routes = [
         meta: {
           title: '操作日志'
         }
+      },
+      {
+        path: '403',
+        name: 'forbidden',
+        component: () => import('@/views/error/ForbiddenView.vue'),
+        meta: {
+          title: '无权限'
+        }
+      },
+      {
+        path: ':pathMatch(.*)*',
+        name: 'not-found',
+        component: () => import('@/views/error/NotFoundView.vue'),
+        meta: {
+          title: '页面不存在'
+        }
       }
     ]
-  },
-  {
-    path: '/:pathMatch(.*)*',
-    redirect: '/dashboard'
   }
 ]
 
@@ -141,6 +163,16 @@ router.beforeEach(async (to) => {
         query: {
           redirect: to.fullPath
         }
+      }
+    }
+  }
+
+  if (to.meta.adminOnly && !authStore.isAdmin) {
+    ElMessage.warning('无权限访问用户管理')
+    return {
+      path: '/403',
+      query: {
+        from: to.fullPath
       }
     }
   }

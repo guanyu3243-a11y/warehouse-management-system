@@ -4,30 +4,37 @@ import org.springframework.http.HttpStatus;
 
 public class BusinessException extends RuntimeException {
 
+    private final ErrorCode errorCode;
+
     private final int code;
 
     private final HttpStatus httpStatus;
 
-    private BusinessException(int code, String message, HttpStatus httpStatus) {
+    private BusinessException(ErrorCode errorCode, String message) {
         super(message);
-        this.code = code;
-        this.httpStatus = httpStatus;
+        this.errorCode = errorCode;
+        this.code = errorCode.getCode();
+        this.httpStatus = errorCode.getHttpStatus();
     }
 
     public static BusinessException badRequest(String message) {
-        return new BusinessException(400, message, HttpStatus.BAD_REQUEST);
+        return new BusinessException(ErrorCode.BAD_REQUEST, message);
     }
 
     public static BusinessException unauthorized(String message) {
-        return new BusinessException(401, message, HttpStatus.UNAUTHORIZED);
+        return new BusinessException(ErrorCode.UNAUTHORIZED, message);
     }
 
     public static BusinessException forbidden(String message) {
-        return new BusinessException(403, message, HttpStatus.FORBIDDEN);
+        return new BusinessException(ErrorCode.FORBIDDEN, message);
     }
 
     public static BusinessException notFound(String message) {
-        return new BusinessException(404, message, HttpStatus.NOT_FOUND);
+        return new BusinessException(ErrorCode.NOT_FOUND, message);
+    }
+
+    public ErrorCode getErrorCode() {
+        return errorCode;
     }
 
     public int getCode() {
