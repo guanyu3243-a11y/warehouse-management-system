@@ -84,10 +84,26 @@
                 <ElButton v-if="row.status === 'DRAFT'" size="small" type="primary" link @click="openEdit(row)">
                   编辑
                 </ElButton>
-                <ElButton v-if="row.status === 'DRAFT'" size="small" type="success" link @click="confirmDocument(row)">
+                <ElButton
+                  v-if="row.status === 'DRAFT'"
+                  size="small"
+                  type="success"
+                  link
+                  :loading="confirmingId === row.id"
+                  :disabled="cancellingId === row.id"
+                  @click="confirmDocument(row)"
+                >
                   确认
                 </ElButton>
-                <ElButton v-if="row.status === 'DRAFT'" size="small" type="warning" link @click="cancelDocument(row)">
+                <ElButton
+                  v-if="row.status === 'DRAFT'"
+                  size="small"
+                  type="warning"
+                  link
+                  :loading="cancellingId === row.id"
+                  :disabled="confirmingId === row.id"
+                  @click="cancelDocument(row)"
+                >
                   取消
                 </ElButton>
               </span>
@@ -291,6 +307,8 @@ const priceField = computed(() => (isStockIn.value ? 'unitCost' : 'unitSalePrice
 const priceLabel = computed(() => (isStockIn.value ? '入库单价' : '出库单价'))
 const loading = ref(false)
 const saving = ref(false)
+const confirmingId = ref(null)
+const cancellingId = ref(null)
 const dialogVisible = ref(false)
 const detailVisible = ref(false)
 const editingId = ref(null)
@@ -522,6 +540,10 @@ async function saveDocument() {
 }
 
 async function confirmDocument(row) {
+  if (confirmingId.value || cancellingId.value) {
+    return
+  }
+
   try {
     await ElMessageBox.confirm(
       `确认${isStockIn.value ? '入库' : '出库'}单据「${row[documentNoField.value]}」？`,
@@ -536,12 +558,22 @@ async function confirmDocument(row) {
     return
   }
 
-  await props.api.confirm(row.id)
-  ElMessage.success('确认成功')
-  loadList()
+  confirmingId.value = row.id
+
+  try {
+    await props.api.confirm(row.id)
+    ElMessage.success('确认成功')
+    await loadList()
+  } finally {
+    confirmingId.value = null
+  }
 }
 
 async function cancelDocument(row) {
+  if (confirmingId.value || cancellingId.value) {
+    return
+  }
+
   try {
     await ElMessageBox.confirm(`确认取消单据「${row[documentNoField.value]}」？`, '取消单据', {
       type: 'warning',
@@ -552,9 +584,15 @@ async function cancelDocument(row) {
     return
   }
 
-  await props.api.cancel(row.id)
-  ElMessage.success('已取消')
-  loadList()
+  cancellingId.value = row.id
+
+  try {
+    await props.api.cancel(row.id)
+    ElMessage.success('已取消')
+    await loadList()
+  } finally {
+    cancellingId.value = null
+  }
 }
 
 onMounted(async () => {

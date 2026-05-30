@@ -142,13 +142,12 @@ public class StockOutServiceImpl implements StockOutService {
             throw BusinessException.badRequest("Stock-out document has no items");
         }
 
+        markConfirmedIfDraft(id);
         for (StockOutItem item : items) {
             decreaseStock(stockOut, item);
         }
 
-        stockOut.setStatus(CONFIRMED_STATUS);
-        stockOutMapper.updateById(stockOut);
-        return toResponse(stockOut, true);
+        return toResponse(getExisting(id), true);
     }
 
     @Override
@@ -157,17 +156,12 @@ public class StockOutServiceImpl implements StockOutService {
         StockOut stockOut = getExisting(id);
         ensureDraft(stockOut);
 
-        stockOut.setStatus(CANCELLED_STATUS);
-        stockOutMapper.updateById(stockOut);
-        return toResponse(stockOut, true);
+        markCancelledIfDraft(id);
+        return toResponse(getExisting(id), true);
     }
 
     private void decreaseStock(StockOut stockOut, StockOutItem item) {
-        Stock stock = stockMapper.selectOne(
-                Wrappers.<Stock>lambdaQuery()
-                        .eq(Stock::getWarehouseId, stockOut.getWarehouseId())
-                        .eq(Stock::getProductId, item.getProductId())
-        );
+        Stock stock = stockMapper.selectByProductAndWarehouseForUpdate(item.getProductId(), stockOut.getWarehouseId());
         int quantityBefore = stock == null ? 0 : defaultInt(stock.getQuantity());
         int changeQuantity = -item.getQuantity();
         int quantityAfter = quantityBefore + changeQuantity;
@@ -176,8 +170,10 @@ public class StockOutServiceImpl implements StockOutService {
             throw BusinessException.badRequest("Insufficient stock for product id " + item.getProductId());
         }
 
-        stock.setQuantity(quantityAfter);
-        stockMapper.updateById(stock);
+        int updated = stockMapper.decreaseQuantityByIdIfEnough(stock.getId(), item.getQuantity());
+        if (updated != 1) {
+            throw BusinessException.badRequest("Insufficient stock for product id " + item.getProductId());
+        }
 
         stockMovementService.record(new StockMovementRecordCommand(
                 item.getProductId(),
@@ -192,6 +188,34 @@ public class StockOutServiceImpl implements StockOutService {
                 stockOut.getOperatorId(),
                 movementRemark(stockOut.getRemark(), item.getRemark())
         ));
+    }
+
+    private void markConfirmedIfDraft(Long id) {
+        int updated = stockOutMapper.update(
+                null,
+                Wrappers.<StockOut>update()
+                        .eq("id", id)
+                        .eq("status", DRAFT_STATUS)
+                        .set("status", CONFIRMED_STATUS)
+                        .set("updated_at", LocalDateTime.now())
+        );
+        if (updated != 1) {
+            throw BusinessException.badRequest("Stock-out document has already been processed");
+        }
+    }
+
+    private void markCancelledIfDraft(Long id) {
+        int updated = stockOutMapper.update(
+                null,
+                Wrappers.<StockOut>update()
+                        .eq("id", id)
+                        .eq("status", DRAFT_STATUS)
+                        .set("status", CANCELLED_STATUS)
+                        .set("updated_at", LocalDateTime.now())
+        );
+        if (updated != 1) {
+            throw BusinessException.badRequest("Stock-out document has already been processed");
+        }
     }
 
     private void validateRequest(StockOutRequest request) {

@@ -149,13 +149,12 @@ public class StockInServiceImpl implements StockInService {
             throw BusinessException.badRequest("Stock-in document has no items");
         }
 
+        markConfirmedIfDraft(id);
         for (StockInItem item : items) {
             increaseStock(stockIn, item);
         }
 
-        stockIn.setStatus(CONFIRMED_STATUS);
-        stockInMapper.updateById(stockIn);
-        return toResponse(stockIn, true);
+        return toResponse(getExisting(id), true);
     }
 
     @Override
@@ -164,17 +163,12 @@ public class StockInServiceImpl implements StockInService {
         StockIn stockIn = getExisting(id);
         ensureDraft(stockIn);
 
-        stockIn.setStatus(CANCELLED_STATUS);
-        stockInMapper.updateById(stockIn);
-        return toResponse(stockIn, true);
+        markCancelledIfDraft(id);
+        return toResponse(getExisting(id), true);
     }
 
     private void increaseStock(StockIn stockIn, StockInItem item) {
-        Stock stock = stockMapper.selectOne(
-                Wrappers.<Stock>lambdaQuery()
-                        .eq(Stock::getWarehouseId, stockIn.getWarehouseId())
-                        .eq(Stock::getProductId, item.getProductId())
-        );
+        Stock stock = stockMapper.selectByProductAndWarehouseForUpdate(item.getProductId(), stockIn.getWarehouseId());
         int quantityBefore = stock == null ? 0 : defaultInt(stock.getQuantity());
         int changeQuantity = item.getQuantity();
         int quantityAfter = quantityBefore + changeQuantity;
@@ -185,10 +179,13 @@ public class StockInServiceImpl implements StockInService {
             stock.setProductId(item.getProductId());
             stock.setQuantity(quantityAfter);
             stock.setLockedQuantity(0);
+            stock.setVersion(0);
             stockMapper.insert(stock);
         } else {
-            stock.setQuantity(quantityAfter);
-            stockMapper.updateById(stock);
+            int updated = stockMapper.updateQuantityById(stock.getId(), quantityAfter);
+            if (updated != 1) {
+                throw BusinessException.badRequest("Stock update failed, please retry");
+            }
         }
 
         stockMovementService.record(new StockMovementRecordCommand(
@@ -204,6 +201,34 @@ public class StockInServiceImpl implements StockInService {
                 stockIn.getOperatorId(),
                 movementRemark(stockIn.getRemark(), item.getRemark())
         ));
+    }
+
+    private void markConfirmedIfDraft(Long id) {
+        int updated = stockInMapper.update(
+                null,
+                Wrappers.<StockIn>update()
+                        .eq("id", id)
+                        .eq("status", DRAFT_STATUS)
+                        .set("status", CONFIRMED_STATUS)
+                        .set("updated_at", LocalDateTime.now())
+        );
+        if (updated != 1) {
+            throw BusinessException.badRequest("Stock-in document has already been processed");
+        }
+    }
+
+    private void markCancelledIfDraft(Long id) {
+        int updated = stockInMapper.update(
+                null,
+                Wrappers.<StockIn>update()
+                        .eq("id", id)
+                        .eq("status", DRAFT_STATUS)
+                        .set("status", CANCELLED_STATUS)
+                        .set("updated_at", LocalDateTime.now())
+        );
+        if (updated != 1) {
+            throw BusinessException.badRequest("Stock-in document has already been processed");
+        }
     }
 
     private void validateRequest(StockInRequest request) {

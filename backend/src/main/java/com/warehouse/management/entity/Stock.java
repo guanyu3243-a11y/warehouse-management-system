@@ -13,6 +13,8 @@ public class Stock extends BaseEntity {
 
     private Integer lockedQuantity;
 
+    private Integer version;
+
     public Long getProductId() {
         return productId;
     }
@@ -43,5 +45,13 @@ public class Stock extends BaseEntity {
 
     public void setLockedQuantity(Integer lockedQuantity) {
         this.lockedQuantity = lockedQuantity;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
     }
 }
