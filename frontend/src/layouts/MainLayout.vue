@@ -15,47 +15,61 @@
         :default-active="route.path"
         class="side-menu"
       >
-        <ElMenuItem index="/dashboard">
+        <ElMenuItem v-if="can('dashboard:view')" index="/dashboard">
           <ElIcon><House /></ElIcon>
           <template #title>Dashboard</template>
         </ElMenuItem>
-        <ElMenuItem index="/categories">
+        <ElMenuItem v-if="can('category:view')" index="/categories">
           <ElIcon><Collection /></ElIcon>
           <template #title>商品分类</template>
         </ElMenuItem>
-        <ElMenuItem index="/products">
+        <ElMenuItem v-if="can('product:view')" index="/products">
           <ElIcon><Goods /></ElIcon>
           <template #title>服装商品</template>
         </ElMenuItem>
-        <ElMenuItem index="/warehouses">
+        <ElMenuItem v-if="can('warehouse:view')" index="/warehouses">
           <ElIcon><OfficeBuilding /></ElIcon>
           <template #title>仓库管理</template>
         </ElMenuItem>
-        <ElMenuItem index="/suppliers">
+        <ElMenuItem v-if="can('supplier:view')" index="/suppliers">
           <ElIcon><Van /></ElIcon>
           <template #title>供应商管理</template>
         </ElMenuItem>
-        <ElMenuItem v-if="authStore.isAdmin" index="/users">
-          <ElIcon><User /></ElIcon>
-          <template #title>用户管理</template>
-        </ElMenuItem>
-        <ElMenuItem index="/stock-in">
+        <ElSubMenu v-if="showSystemMenu" index="/system">
+          <template #title>
+            <ElIcon><Setting /></ElIcon>
+            <span>系统管理</span>
+          </template>
+          <ElMenuItem v-if="authStore.isAdmin && can('user:view')" index="/users">
+            <ElIcon><User /></ElIcon>
+            <template #title>用户管理</template>
+          </ElMenuItem>
+          <ElMenuItem v-if="authStore.isAdmin && can('role:view')" index="/roles">
+            <ElIcon><UserFilled /></ElIcon>
+            <template #title>角色管理</template>
+          </ElMenuItem>
+          <ElMenuItem v-if="authStore.isAdmin && can('permission:view')" index="/permissions">
+            <ElIcon><Lock /></ElIcon>
+            <template #title>权限管理</template>
+          </ElMenuItem>
+        </ElSubMenu>
+        <ElMenuItem v-if="can('stock-in:view')" index="/stock-in">
           <ElIcon><Download /></ElIcon>
           <template #title>入库管理</template>
         </ElMenuItem>
-        <ElMenuItem index="/stock-out">
+        <ElMenuItem v-if="can('stock-out:view')" index="/stock-out">
           <ElIcon><Upload /></ElIcon>
           <template #title>出库管理</template>
         </ElMenuItem>
-        <ElMenuItem index="/stock">
+        <ElMenuItem v-if="can('stock:view')" index="/stock">
           <ElIcon><DataLine /></ElIcon>
           <template #title>库存查询</template>
         </ElMenuItem>
-        <ElMenuItem index="/low-stock">
+        <ElMenuItem v-if="can('stock:low:view')" index="/low-stock">
           <ElIcon><Warning /></ElIcon>
           <template #title>低库存预警</template>
         </ElMenuItem>
-        <ElMenuItem index="/operation-logs">
+        <ElMenuItem v-if="can('operation-log:view')" index="/operation-logs">
           <ElIcon><Tickets /></ElIcon>
           <template #title>操作日志</template>
         </ElMenuItem>
@@ -115,11 +129,14 @@ import {
   Fold,
   Goods,
   House,
+  Lock,
   OfficeBuilding,
+  Setting,
   SwitchButton,
   Tickets,
   Upload,
   User,
+  UserFilled,
   Van,
   Warning
 } from '@element-plus/icons-vue'
@@ -133,6 +150,13 @@ const isCollapsed = ref(false)
 
 const pageTitle = computed(() => route.meta.title || '工作台')
 const avatarText = computed(() => authStore.username.slice(0, 1).toUpperCase() || 'U')
+const showSystemMenu = computed(
+  () => authStore.isAdmin && (can('user:view') || can('role:view') || can('permission:view'))
+)
+
+function can(permission) {
+  return authStore.hasPermission(permission)
+}
 
 function toggleSidebar() {
   isCollapsed.value = !isCollapsed.value

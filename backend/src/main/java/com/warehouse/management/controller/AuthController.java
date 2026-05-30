@@ -4,6 +4,7 @@ import com.warehouse.management.common.ApiResponse;
 import com.warehouse.management.common.CurrentUserContext;
 import com.warehouse.management.dto.AuthLoginRequest;
 import com.warehouse.management.dto.AuthLoginResponse;
+import com.warehouse.management.dto.AuthPermissionResponse;
 import com.warehouse.management.dto.AuthRegisterRequest;
 import com.warehouse.management.dto.AuthUserResponse;
 import com.warehouse.management.service.AuthService;
@@ -37,6 +38,11 @@ public class AuthController {
     @GetMapping("/me")
     public ApiResponse<AuthUserResponse> me() {
         return ApiResponse.success(authService.getCurrentUser(CurrentUserContext.getRequired().id()));
+    }
+
+    @GetMapping("/permissions")
+    public ApiResponse<AuthPermissionResponse> permissions() {
+        return ApiResponse.success(authService.getCurrentPermissions(CurrentUserContext.getRequired().id()));
     }
 
     @PostMapping("/logout")

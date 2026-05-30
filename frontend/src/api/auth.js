@@ -8,6 +8,10 @@ export function currentUserApi() {
   return http.get('/auth/me')
 }
 
+export function currentPermissionsApi() {
+  return http.get('/auth/permissions')
+}
+
 export function logoutApi() {
   return http.post('/auth/logout')
 }

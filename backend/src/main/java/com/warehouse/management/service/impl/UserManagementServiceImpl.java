@@ -7,19 +7,34 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.warehouse.management.common.BusinessException;
 import com.warehouse.management.common.CurrentUserContext;
 import com.warehouse.management.dto.PageResponse;
+import com.warehouse.management.dto.RoleResponse;
 import com.warehouse.management.dto.UserCreateRequest;
 import com.warehouse.management.dto.UserPasswordUpdateRequest;
 import com.warehouse.management.dto.UserResponse;
+import com.warehouse.management.dto.UserRoleUpdateRequest;
 import com.warehouse.management.dto.UserStatusUpdateRequest;
 import com.warehouse.management.dto.UserUpdateRequest;
+import com.warehouse.management.dto.UserWarehousePermissionUpdateRequest;
+import com.warehouse.management.dto.WarehouseResponse;
+import com.warehouse.management.entity.Role;
 import com.warehouse.management.entity.User;
+import com.warehouse.management.entity.UserRole;
+import com.warehouse.management.entity.UserWarehousePermission;
+import com.warehouse.management.entity.Warehouse;
+import com.warehouse.management.mapper.RoleMapper;
 import com.warehouse.management.mapper.UserMapper;
+import com.warehouse.management.mapper.UserRoleMapper;
+import com.warehouse.management.mapper.UserWarehousePermissionMapper;
+import com.warehouse.management.mapper.WarehouseMapper;
 import com.warehouse.management.service.UserManagementService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class UserManagementServiceImpl implements UserManagementService {
@@ -28,20 +43,43 @@ public class UserManagementServiceImpl implements UserManagementService {
 
     private static final String STAFF_ROLE = "STAFF";
 
+    private static final String MANAGER_ROLE = "MANAGER";
+
+    private static final String VIEWER_ROLE = "VIEWER";
+
     private static final String ACTIVE_STATUS = "ACTIVE";
 
     private static final String DISABLED_STATUS = "DISABLED";
 
-    private static final Set<String> SUPPORTED_ROLES = Set.of(ADMIN_ROLE, STAFF_ROLE);
+    private static final Set<String> SUPPORTED_ROLES = Set.of(ADMIN_ROLE, MANAGER_ROLE, STAFF_ROLE, VIEWER_ROLE);
 
     private static final Set<String> SUPPORTED_STATUSES = Set.of(ACTIVE_STATUS, DISABLED_STATUS);
 
     private final UserMapper userMapper;
 
+    private final RoleMapper roleMapper;
+
+    private final UserRoleMapper userRoleMapper;
+
+    private final UserWarehousePermissionMapper userWarehousePermissionMapper;
+
+    private final WarehouseMapper warehouseMapper;
+
     private final PasswordEncoder passwordEncoder;
 
-    public UserManagementServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public UserManagementServiceImpl(
+            UserMapper userMapper,
+            RoleMapper roleMapper,
+            UserRoleMapper userRoleMapper,
+            UserWarehousePermissionMapper userWarehousePermissionMapper,
+            WarehouseMapper warehouseMapper,
+            PasswordEncoder passwordEncoder
+    ) {
         this.userMapper = userMapper;
+        this.roleMapper = roleMapper;
+        this.userRoleMapper = userRoleMapper;
+        this.userWarehousePermissionMapper = userWarehousePermissionMapper;
+        this.warehouseMapper = warehouseMapper;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -96,6 +134,7 @@ public class UserManagementServiceImpl implements UserManagementService {
         user.setEmail(trimToNull(request.email()));
         user.setPhone(trimToNull(request.phone()));
         userMapper.insert(user);
+        syncPrimaryUserRole(user.getId(), user.getRole());
 
         return toResponse(user);
     }
@@ -116,6 +155,7 @@ public class UserManagementServiceImpl implements UserManagementService {
         user.setEmail(trimToNull(request.email()));
         user.setPhone(trimToNull(request.phone()));
         userMapper.updateById(user);
+        syncPrimaryUserRole(user.getId(), user.getRole());
 
         return toResponse(user);
     }
@@ -148,7 +188,104 @@ public class UserManagementServiceImpl implements UserManagementService {
         if (currentUserId.equals(id)) {
             throw BusinessException.badRequest("Cannot delete yourself");
         }
+        userRoleMapper.delete(Wrappers.<UserRole>lambdaQuery().eq(UserRole::getUserId, id));
+        userWarehousePermissionMapper.delete(
+                Wrappers.<UserWarehousePermission>lambdaQuery().eq(UserWarehousePermission::getUserId, id)
+        );
         userMapper.deleteById(id);
+    }
+
+    @Override
+    public List<RoleResponse> getRoles(Long id) {
+        getExisting(id);
+        Set<Long> roleIds = userRoleMapper.selectList(
+                        Wrappers.<UserRole>lambdaQuery().eq(UserRole::getUserId, id)
+                )
+                .stream()
+                .map(UserRole::getRoleId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (roleIds.isEmpty()) {
+            return List.of();
+        }
+        return roleMapper.selectBatchIds(roleIds).stream().map(this::toRoleResponse).toList();
+    }
+
+    @Override
+    @Transactional
+    public List<RoleResponse> updateRoles(Long id, UserRoleUpdateRequest request) {
+        User user = getExisting(id);
+        Set<Long> roleIds = sanitizeIds(request.roleIds());
+        if (roleIds.isEmpty()) {
+            throw BusinessException.badRequest("At least one role is required");
+        }
+
+        List<Role> roles = roleMapper.selectBatchIds(roleIds);
+        if (roles.size() != roleIds.size()) {
+            throw BusinessException.badRequest("Role list contains invalid role id");
+        }
+        if (roles.stream().anyMatch(role -> DISABLED_STATUS.equals(role.getStatus()))) {
+            throw BusinessException.badRequest("Disabled role cannot be assigned");
+        }
+
+        userRoleMapper.delete(Wrappers.<UserRole>lambdaQuery().eq(UserRole::getUserId, id));
+        roles.forEach(role -> {
+            UserRole userRole = new UserRole();
+            userRole.setUserId(id);
+            userRole.setRoleId(role.getId());
+            userRoleMapper.insert(userRole);
+        });
+
+        String primaryRole = roles.stream()
+                .map(Role::getCode)
+                .filter(SUPPORTED_ROLES::contains)
+                .findFirst()
+                .orElse(STAFF_ROLE);
+        user.setRole(primaryRole);
+        userMapper.updateById(user);
+
+        return getRoles(id);
+    }
+
+    @Override
+    public List<WarehouseResponse> getWarehouses(Long id) {
+        getExisting(id);
+        Set<Long> warehouseIds = userWarehousePermissionMapper.selectList(
+                        Wrappers.<UserWarehousePermission>lambdaQuery()
+                                .eq(UserWarehousePermission::getUserId, id)
+                )
+                .stream()
+                .map(UserWarehousePermission::getWarehouseId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+        if (warehouseIds.isEmpty()) {
+            return List.of();
+        }
+        return warehouseMapper.selectBatchIds(warehouseIds).stream().map(this::toWarehouseResponse).toList();
+    }
+
+    @Override
+    @Transactional
+    public List<WarehouseResponse> updateWarehouses(Long id, UserWarehousePermissionUpdateRequest request) {
+        getExisting(id);
+        Set<Long> warehouseIds = sanitizeIds(request.warehouseIds());
+        if (!warehouseIds.isEmpty()) {
+            List<Warehouse> warehouses = warehouseMapper.selectBatchIds(warehouseIds);
+            if (warehouses.size() != warehouseIds.size()) {
+                throw BusinessException.badRequest("Warehouse list contains invalid warehouse id");
+            }
+        }
+
+        userWarehousePermissionMapper.delete(
+                Wrappers.<UserWarehousePermission>lambdaQuery()
+                        .eq(UserWarehousePermission::getUserId, id)
+        );
+        warehouseIds.forEach(warehouseId -> {
+            UserWarehousePermission permission = new UserWarehousePermission();
+            permission.setUserId(id);
+            permission.setWarehouseId(warehouseId);
+            userWarehousePermissionMapper.insert(permission);
+        });
+
+        return getWarehouses(id);
     }
 
     private User getExisting(Long id) {
@@ -179,7 +316,7 @@ public class UserManagementServiceImpl implements UserManagementService {
     private String normalizeRole(String role) {
         String value = role.trim().toUpperCase();
         if (!SUPPORTED_ROLES.contains(value)) {
-            throw BusinessException.badRequest("Role must be ADMIN or STAFF");
+            throw BusinessException.badRequest("Role must be ADMIN, MANAGER, STAFF or VIEWER");
         }
         return value;
     }
@@ -203,6 +340,56 @@ public class UserManagementServiceImpl implements UserManagementService {
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );
+    }
+
+    private RoleResponse toRoleResponse(Role role) {
+        return new RoleResponse(
+                role.getId(),
+                role.getCode(),
+                role.getName(),
+                role.getDescription(),
+                role.getStatus(),
+                role.getCreatedAt(),
+                role.getUpdatedAt()
+        );
+    }
+
+    private WarehouseResponse toWarehouseResponse(Warehouse warehouse) {
+        return new WarehouseResponse(
+                warehouse.getId(),
+                warehouse.getCode(),
+                warehouse.getName(),
+                warehouse.getAddress(),
+                warehouse.getContactName(),
+                warehouse.getContactPhone(),
+                warehouse.getStatus(),
+                warehouse.getCreatedAt(),
+                warehouse.getUpdatedAt()
+        );
+    }
+
+    private void syncPrimaryUserRole(Long userId, String roleCode) {
+        Role role = roleMapper.selectOne(
+                Wrappers.<Role>lambdaQuery().eq(Role::getCode, roleCode)
+        );
+        if (role == null) {
+            return;
+        }
+        userRoleMapper.delete(Wrappers.<UserRole>lambdaQuery().eq(UserRole::getUserId, userId));
+
+        UserRole userRole = new UserRole();
+        userRole.setUserId(userId);
+        userRole.setRoleId(role.getId());
+        userRoleMapper.insert(userRole);
+    }
+
+    private Set<Long> sanitizeIds(List<Long> ids) {
+        if (ids == null) {
+            return Set.of();
+        }
+        return ids.stream()
+                .filter(id -> id != null && id > 0)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     private boolean hasText(String value) {

@@ -2,13 +2,19 @@ package com.warehouse.management.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.warehouse.management.common.BusinessException;
+import com.warehouse.management.dto.AuthPermissionResponse;
 import com.warehouse.management.dto.AuthLoginRequest;
 import com.warehouse.management.dto.AuthLoginResponse;
 import com.warehouse.management.dto.AuthRegisterRequest;
 import com.warehouse.management.dto.AuthUserResponse;
+import com.warehouse.management.entity.Role;
 import com.warehouse.management.entity.User;
+import com.warehouse.management.entity.UserRole;
+import com.warehouse.management.mapper.RoleMapper;
 import com.warehouse.management.mapper.UserMapper;
+import com.warehouse.management.mapper.UserRoleMapper;
 import com.warehouse.management.service.AuthService;
+import com.warehouse.management.service.AuthorizationService;
 import com.warehouse.management.service.OperationLogService;
 import com.warehouse.management.util.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,22 +31,34 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserMapper userMapper;
 
+    private final RoleMapper roleMapper;
+
+    private final UserRoleMapper userRoleMapper;
+
     private final PasswordEncoder passwordEncoder;
 
     private final JwtUtil jwtUtil;
 
     private final OperationLogService operationLogService;
 
+    private final AuthorizationService authorizationService;
+
     public AuthServiceImpl(
             UserMapper userMapper,
+            RoleMapper roleMapper,
+            UserRoleMapper userRoleMapper,
             PasswordEncoder passwordEncoder,
             JwtUtil jwtUtil,
-            OperationLogService operationLogService
+            OperationLogService operationLogService,
+            AuthorizationService authorizationService
     ) {
         this.userMapper = userMapper;
+        this.roleMapper = roleMapper;
+        this.userRoleMapper = userRoleMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.operationLogService = operationLogService;
+        this.authorizationService = authorizationService;
     }
 
     @Override
@@ -61,6 +79,7 @@ public class AuthServiceImpl implements AuthService {
         user.setRole(DEFAULT_ROLE);
         user.setStatus(ACTIVE_STATUS);
         userMapper.insert(user);
+        syncDefaultRole(user.getId());
         operationLogService.record(
                 user.getId(),
                 "AUTH",
@@ -112,6 +131,11 @@ public class AuthServiceImpl implements AuthService {
         return toUserResponse(user);
     }
 
+    @Override
+    public AuthPermissionResponse getCurrentPermissions(Long userId) {
+        return authorizationService.getCurrentPermissions(userId);
+    }
+
     private AuthUserResponse toUserResponse(User user) {
         return new AuthUserResponse(
                 user.getId(),
@@ -119,6 +143,19 @@ public class AuthServiceImpl implements AuthService {
                 user.getRole(),
                 user.getStatus()
         );
+    }
+
+    private void syncDefaultRole(Long userId) {
+        Role role = roleMapper.selectOne(
+                Wrappers.<Role>lambdaQuery().eq(Role::getCode, DEFAULT_ROLE)
+        );
+        if (role == null) {
+            return;
+        }
+        UserRole userRole = new UserRole();
+        userRole.setUserId(userId);
+        userRole.setRoleId(role.getId());
+        userRoleMapper.insert(userRole);
     }
 
     private String trimToNull(String value) {

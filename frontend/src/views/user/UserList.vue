@@ -66,11 +66,13 @@
               {{ formatDateTime(row.createdAt) }}
             </template>
           </ElTableColumn>
-          <ElTableColumn label="操作" fixed="right" width="250">
+          <ElTableColumn label="操作" fixed="right" width="340">
             <template #default="{ row }">
               <span class="table-actions">
                 <ElButton size="small" type="primary" link @click="openEdit(row)">编辑</ElButton>
                 <ElButton size="small" type="primary" link @click="openPasswordDialog(row)">重置密码</ElButton>
+                <ElButton size="small" type="primary" link @click="openRoleDialog(row)">角色</ElButton>
+                <ElButton size="small" type="primary" link @click="openWarehouseDialog(row)">仓库</ElButton>
                 <ElButton
                   size="small"
                   :type="row.status === 'ACTIVE' ? 'warning' : 'success'"
@@ -152,6 +154,35 @@
         <ElButton type="primary" :loading="savingPassword" @click="savePassword">保存</ElButton>
       </template>
     </ElDialog>
+
+    <ElDialog v-model="roleDialogVisible" title="分配角色" width="520px" destroy-on-close>
+      <div class="assign-target">用户：{{ selectedUser?.username }}</div>
+      <ElCheckboxGroup v-model="roleForm.roleIds" class="assign-options">
+        <ElCheckbox v-for="role in availableRoles" :key="role.id" :label="role.id">
+          {{ role.name }}
+          <span class="assign-code">{{ role.code }}</span>
+        </ElCheckbox>
+      </ElCheckboxGroup>
+      <template #footer>
+        <ElButton @click="roleDialogVisible = false">取消</ElButton>
+        <ElButton type="primary" :loading="savingRoles" @click="saveUserRoles">保存角色</ElButton>
+      </template>
+    </ElDialog>
+
+    <ElDialog v-model="warehouseDialogVisible" title="分配仓库范围" width="560px" destroy-on-close>
+      <div class="assign-target">用户：{{ selectedUser?.username }}</div>
+      <p class="assign-help">不选择仓库时表示不限制仓库范围，后续数据权限阶段会继续细化。</p>
+      <ElCheckboxGroup v-model="warehouseForm.warehouseIds" class="assign-options">
+        <ElCheckbox v-for="warehouse in availableWarehouses" :key="warehouse.id" :label="warehouse.id">
+          {{ warehouse.name }}
+          <span class="assign-code">{{ warehouse.code }}</span>
+        </ElCheckbox>
+      </ElCheckboxGroup>
+      <template #footer>
+        <ElButton @click="warehouseDialogVisible = false">取消</ElButton>
+        <ElButton type="primary" :loading="savingWarehouses" @click="saveUserWarehouses">保存仓库范围</ElButton>
+      </template>
+    </ElDialog>
   </section>
 </template>
 
@@ -163,37 +194,58 @@ import { Plus, Refresh, Search } from '@element-plus/icons-vue'
 import {
   createUser,
   deleteUser,
+  getUserRoles,
+  getUserWarehouses,
   pageUsers,
   updateUser,
   updateUserPassword,
-  updateUserStatus
+  updateUserRoles,
+  updateUserStatus,
+  updateUserWarehouses
 } from '@/api/users'
+import { roleApi } from '@/api/rbac'
+import { warehouseApi } from '@/api/business'
 import { masterStatusOptions, statusLabel, statusType } from '@/constants/options'
 import { useAuthStore } from '@/stores/auth'
 import { formatDateTime } from '@/utils/format'
 
-const roleOptions = [
+const roleOptions = ref([
   {
     label: '管理员',
     value: 'ADMIN'
   },
   {
+    label: '仓库主管',
+    value: 'MANAGER'
+  },
+  {
     label: '仓库人员',
     value: 'STAFF'
+  },
+  {
+    label: '只读查看员',
+    value: 'VIEWER'
   }
-]
+])
 
 const authStore = useAuthStore()
 const loading = ref(false)
 const saving = ref(false)
 const savingPassword = ref(false)
+const savingRoles = ref(false)
+const savingWarehouses = ref(false)
 const formDialogVisible = ref(false)
 const passwordDialogVisible = ref(false)
+const roleDialogVisible = ref(false)
+const warehouseDialogVisible = ref(false)
 const editingId = ref(null)
 const passwordUserId = ref(null)
+const selectedUser = ref(null)
 const formRef = ref()
 const passwordFormRef = ref()
 const records = ref([])
+const availableRoles = ref([])
+const availableWarehouses = ref([])
 const pagination = reactive({
   page: 1,
   size: 10,
@@ -214,6 +266,12 @@ const form = reactive({
 })
 const passwordForm = reactive({
   password: ''
+})
+const roleForm = reactive({
+  roleIds: []
+})
+const warehouseForm = reactive({
+  warehouseIds: []
 })
 
 const formRules = computed(() => ({
@@ -276,7 +334,7 @@ const passwordRules = {
 }
 
 function roleLabel(role) {
-  return roleOptions.find((option) => option.value === role)?.label || role || '-'
+  return roleOptions.value.find((option) => option.value === role)?.label || role || '-'
 }
 
 function isSelf(row) {
@@ -309,6 +367,30 @@ async function loadList() {
   } finally {
     loading.value = false
   }
+}
+
+async function loadRoleOptions() {
+  const result = await roleApi.page({
+    page: 1,
+    size: 100,
+    status: 'ACTIVE'
+  })
+  availableRoles.value = result.records || []
+  if (availableRoles.value.length > 0) {
+    roleOptions.value = availableRoles.value.map((role) => ({
+      label: role.name,
+      value: role.code
+    }))
+  }
+}
+
+async function loadWarehouseOptions() {
+  const result = await warehouseApi.page({
+    page: 1,
+    size: 100,
+    status: 'ACTIVE'
+  })
+  availableWarehouses.value = result.records || []
 }
 
 function handleSearch() {
@@ -383,6 +465,50 @@ function openPasswordDialog(row) {
   passwordDialogVisible.value = true
 }
 
+async function openRoleDialog(row) {
+  selectedUser.value = row
+  roleDialogVisible.value = true
+  await loadRoleOptions()
+  const roles = await getUserRoles(row.id)
+  roleForm.roleIds = (roles || []).map((role) => role.id)
+}
+
+async function saveUserRoles() {
+  if (roleForm.roleIds.length === 0) {
+    ElMessage.warning('请至少选择一个角色')
+    return
+  }
+
+  savingRoles.value = true
+  try {
+    await updateUserRoles(selectedUser.value.id, roleForm.roleIds)
+    ElMessage.success('角色保存成功')
+    roleDialogVisible.value = false
+    loadList()
+  } finally {
+    savingRoles.value = false
+  }
+}
+
+async function openWarehouseDialog(row) {
+  selectedUser.value = row
+  warehouseDialogVisible.value = true
+  await loadWarehouseOptions()
+  const warehouses = await getUserWarehouses(row.id)
+  warehouseForm.warehouseIds = (warehouses || []).map((warehouse) => warehouse.id)
+}
+
+async function saveUserWarehouses() {
+  savingWarehouses.value = true
+  try {
+    await updateUserWarehouses(selectedUser.value.id, warehouseForm.warehouseIds)
+    ElMessage.success('仓库范围保存成功')
+    warehouseDialogVisible.value = false
+  } finally {
+    savingWarehouses.value = false
+  }
+}
+
 async function savePassword() {
   await passwordFormRef.value?.validate()
   savingPassword.value = true
@@ -435,5 +561,35 @@ async function removeUser(row) {
   loadList()
 }
 
-onMounted(loadList)
+onMounted(() => {
+  loadRoleOptions()
+  loadList()
+})
 </script>
+
+<style scoped>
+.assign-target {
+  margin-bottom: 12px;
+  color: var(--wms-ink);
+  font-weight: 650;
+}
+
+.assign-help {
+  margin: 0 0 12px;
+  color: var(--wms-muted);
+  font-size: 13px;
+}
+
+.assign-options {
+  display: grid;
+  max-height: 360px;
+  gap: 10px;
+  overflow: auto;
+}
+
+.assign-code {
+  margin-left: 6px;
+  color: var(--wms-muted);
+  font-size: 12px;
+}
+</style>

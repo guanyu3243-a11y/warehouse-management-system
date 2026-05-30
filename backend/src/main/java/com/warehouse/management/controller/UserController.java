@@ -2,11 +2,15 @@ package com.warehouse.management.controller;
 
 import com.warehouse.management.common.ApiResponse;
 import com.warehouse.management.dto.PageResponse;
+import com.warehouse.management.dto.RoleResponse;
 import com.warehouse.management.dto.UserCreateRequest;
 import com.warehouse.management.dto.UserPasswordUpdateRequest;
 import com.warehouse.management.dto.UserResponse;
+import com.warehouse.management.dto.UserRoleUpdateRequest;
 import com.warehouse.management.dto.UserStatusUpdateRequest;
 import com.warehouse.management.dto.UserUpdateRequest;
+import com.warehouse.management.dto.UserWarehousePermissionUpdateRequest;
+import com.warehouse.management.dto.WarehouseResponse;
 import com.warehouse.management.service.UserManagementService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -76,5 +82,31 @@ public class UserController {
     public ApiResponse<Void> delete(@PathVariable Long id) {
         userManagementService.delete(id);
         return ApiResponse.success();
+    }
+
+    @GetMapping("/{id}/roles")
+    public ApiResponse<List<RoleResponse>> getRoles(@PathVariable Long id) {
+        return ApiResponse.success(userManagementService.getRoles(id));
+    }
+
+    @PutMapping("/{id}/roles")
+    public ApiResponse<List<RoleResponse>> updateRoles(
+            @PathVariable Long id,
+            @RequestBody UserRoleUpdateRequest request
+    ) {
+        return ApiResponse.success(userManagementService.updateRoles(id, request));
+    }
+
+    @GetMapping("/{id}/warehouses")
+    public ApiResponse<List<WarehouseResponse>> getWarehouses(@PathVariable Long id) {
+        return ApiResponse.success(userManagementService.getWarehouses(id));
+    }
+
+    @PutMapping("/{id}/warehouses")
+    public ApiResponse<List<WarehouseResponse>> updateWarehouses(
+            @PathVariable Long id,
+            @RequestBody UserWarehousePermissionUpdateRequest request
+    ) {
+        return ApiResponse.success(userManagementService.updateWarehouses(id, request));
     }
 }

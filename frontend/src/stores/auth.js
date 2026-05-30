@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 
-import { currentUserApi, loginApi, logoutApi } from '@/api/auth'
+import { currentPermissionsApi, currentUserApi, loginApi, logoutApi } from '@/api/auth'
 import {
   clearAuthStorage,
   getStoredUser,
@@ -12,6 +12,9 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: getToken(),
     user: getStoredUser(),
+    roles: [],
+    permissions: [],
+    warehouseIds: [],
     loading: false
   }),
   getters: {
@@ -26,7 +29,16 @@ export const useAuthStore = defineStore('auth', {
 
       return roleMap[state.user?.role] || state.user?.role || '未登录'
     },
-    isAdmin: (state) => state.user?.role === 'ADMIN'
+    isAdmin: (state) => state.user?.role === 'ADMIN',
+    hasPermission: (state) => (code) => {
+      if (!code) {
+        return true
+      }
+      if (state.user?.role === 'ADMIN') {
+        return true
+      }
+      return state.permissions.includes(code)
+    }
   },
   actions: {
     async login(form) {
@@ -38,6 +50,7 @@ export const useAuthStore = defineStore('auth', {
         this.token = result.token
         this.user = result.user
         setAuthStorage(result.token, result.user)
+        await this.fetchPermissions()
 
         return result
       } finally {
@@ -53,8 +66,20 @@ export const useAuthStore = defineStore('auth', {
 
       this.user = user
       setAuthStorage(this.token, user)
+      await this.fetchPermissions()
 
       return user
+    },
+    async fetchPermissions() {
+      if (!this.token) {
+        return null
+      }
+
+      const result = await currentPermissionsApi()
+      this.roles = result.roles || []
+      this.permissions = result.permissions || []
+      this.warehouseIds = result.warehouseIds || []
+      return result
     },
     async logout() {
       try {
@@ -68,6 +93,9 @@ export const useAuthStore = defineStore('auth', {
     clearSession() {
       this.token = null
       this.user = null
+      this.roles = []
+      this.permissions = []
+      this.warehouseIds = []
       clearAuthStorage()
     }
   }

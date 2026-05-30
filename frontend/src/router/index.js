@@ -28,7 +28,8 @@ const routes = [
         name: 'dashboard',
         component: () => import('@/views/DashboardView.vue'),
         meta: {
-          title: 'Dashboard'
+          title: 'Dashboard',
+          permission: 'dashboard:view'
         }
       },
       {
@@ -36,7 +37,8 @@ const routes = [
         name: 'categories',
         component: () => import('@/views/master-data/CategoryView.vue'),
         meta: {
-          title: '商品分类'
+          title: '商品分类',
+          permission: 'category:view'
         }
       },
       {
@@ -44,7 +46,8 @@ const routes = [
         name: 'products',
         component: () => import('@/views/master-data/ProductView.vue'),
         meta: {
-          title: '服装商品'
+          title: '服装商品',
+          permission: 'product:view'
         }
       },
       {
@@ -52,7 +55,8 @@ const routes = [
         name: 'warehouses',
         component: () => import('@/views/master-data/WarehouseView.vue'),
         meta: {
-          title: '仓库管理'
+          title: '仓库管理',
+          permission: 'warehouse:view'
         }
       },
       {
@@ -60,7 +64,8 @@ const routes = [
         name: 'suppliers',
         component: () => import('@/views/master-data/SupplierView.vue'),
         meta: {
-          title: '供应商管理'
+          title: '供应商管理',
+          permission: 'supplier:view'
         }
       },
       {
@@ -69,7 +74,28 @@ const routes = [
         component: () => import('@/views/user/UserList.vue'),
         meta: {
           title: '用户管理',
-          adminOnly: true
+          adminOnly: true,
+          permission: 'user:view'
+        }
+      },
+      {
+        path: 'roles',
+        name: 'roles',
+        component: () => import('@/views/system/RoleList.vue'),
+        meta: {
+          title: '角色管理',
+          adminOnly: true,
+          permission: 'role:view'
+        }
+      },
+      {
+        path: 'permissions',
+        name: 'permissions',
+        component: () => import('@/views/system/PermissionList.vue'),
+        meta: {
+          title: '权限管理',
+          adminOnly: true,
+          permission: 'permission:view'
         }
       },
       {
@@ -77,7 +103,8 @@ const routes = [
         name: 'stock-in',
         component: () => import('@/views/documents/StockInView.vue'),
         meta: {
-          title: '入库管理'
+          title: '入库管理',
+          permission: 'stock-in:view'
         }
       },
       {
@@ -85,7 +112,8 @@ const routes = [
         name: 'stock-out',
         component: () => import('@/views/documents/StockOutView.vue'),
         meta: {
-          title: '出库管理'
+          title: '出库管理',
+          permission: 'stock-out:view'
         }
       },
       {
@@ -93,7 +121,8 @@ const routes = [
         name: 'stock',
         component: () => import('@/views/stock/StockView.vue'),
         meta: {
-          title: '库存查询'
+          title: '库存查询',
+          permission: 'stock:view'
         }
       },
       {
@@ -101,7 +130,8 @@ const routes = [
         name: 'low-stock',
         component: () => import('@/views/stock/StockView.vue'),
         meta: {
-          title: '低库存预警'
+          title: '低库存预警',
+          permission: 'stock:low:view'
         }
       },
       {
@@ -109,7 +139,8 @@ const routes = [
         name: 'operation-logs',
         component: () => import('@/views/logs/OperationLogsView.vue'),
         meta: {
-          title: '操作日志'
+          title: '操作日志',
+          permission: 'operation-log:view'
         }
       },
       {
@@ -167,8 +198,32 @@ router.beforeEach(async (to) => {
     }
   }
 
+  if (authStore.permissions.length === 0) {
+    try {
+      await authStore.fetchPermissions()
+    } catch {
+      authStore.clearSession()
+      return {
+        path: '/login',
+        query: {
+          redirect: to.fullPath
+        }
+      }
+    }
+  }
+
   if (to.meta.adminOnly && !authStore.isAdmin) {
-    ElMessage.warning('无权限访问用户管理')
+    ElMessage.warning('无权限访问该模块')
+    return {
+      path: '/403',
+      query: {
+        from: to.fullPath
+      }
+    }
+  }
+
+  if (to.meta.permission && !authStore.hasPermission(to.meta.permission)) {
+    ElMessage.warning('无权限访问该模块')
     return {
       path: '/403',
       query: {

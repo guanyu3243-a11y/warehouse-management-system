@@ -35,3 +35,23 @@ export function updateUserStatus(id, payload) {
 export function deleteUser(id) {
   return http.delete(`/users/${id}`)
 }
+
+export function getUserRoles(id) {
+  return http.get(`/users/${id}/roles`)
+}
+
+export function updateUserRoles(id, roleIds) {
+  return http.put(`/users/${id}/roles`, {
+    roleIds
+  })
+}
+
+export function getUserWarehouses(id) {
+  return http.get(`/users/${id}/warehouses`)
+}
+
+export function updateUserWarehouses(id, warehouseIds) {
+  return http.put(`/users/${id}/warehouses`, {
+    warehouseIds
+  })
+}

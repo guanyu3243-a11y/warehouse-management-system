@@ -184,6 +184,7 @@ curl.exe -X POST http://localhost:8080/api/auth/register -H "Content-Type: appli
 POST /api/auth/register
 POST /api/auth/login
 GET  /api/auth/me
+GET  /api/auth/permissions
 
 GET  /api/users
 POST /api/users
@@ -191,6 +192,25 @@ PUT  /api/users/{id}
 PUT  /api/users/{id}/password
 PUT  /api/users/{id}/status
 DELETE /api/users/{id}
+GET  /api/users/{id}/roles
+PUT  /api/users/{id}/roles
+GET  /api/users/{id}/warehouses
+PUT  /api/users/{id}/warehouses
+
+GET  /api/roles
+GET  /api/roles/{id}
+POST /api/roles
+PUT  /api/roles/{id}
+PUT  /api/roles/{id}/status
+DELETE /api/roles/{id}
+GET  /api/roles/{id}/permissions
+PUT  /api/roles/{id}/permissions
+
+GET  /api/permissions
+GET  /api/permissions/tree
+POST /api/permissions
+PUT  /api/permissions/{id}
+PUT  /api/permissions/{id}/status
 
 GET  /api/categories
 GET  /api/products

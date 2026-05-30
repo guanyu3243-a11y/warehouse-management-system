@@ -1,8 +1,13 @@
 package com.warehouse.management.service.impl;
 
 import com.warehouse.management.dto.UserCreateRequest;
+import com.warehouse.management.entity.Role;
 import com.warehouse.management.entity.User;
+import com.warehouse.management.mapper.RoleMapper;
 import com.warehouse.management.mapper.UserMapper;
+import com.warehouse.management.mapper.UserRoleMapper;
+import com.warehouse.management.mapper.UserWarehousePermissionMapper;
+import com.warehouse.management.mapper.WarehouseMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,13 +28,32 @@ class UserManagementServiceImplTests {
     @Mock
     private UserMapper userMapper;
 
+    @Mock
+    private RoleMapper roleMapper;
+
+    @Mock
+    private UserRoleMapper userRoleMapper;
+
+    @Mock
+    private UserWarehousePermissionMapper userWarehousePermissionMapper;
+
+    @Mock
+    private WarehouseMapper warehouseMapper;
+
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     private UserManagementServiceImpl userManagementService;
 
     @BeforeEach
     void setUp() {
-        userManagementService = new UserManagementServiceImpl(userMapper, passwordEncoder);
+        userManagementService = new UserManagementServiceImpl(
+                userMapper,
+                roleMapper,
+                userRoleMapper,
+                userWarehousePermissionMapper,
+                warehouseMapper,
+                passwordEncoder
+        );
     }
 
     @Test
@@ -40,6 +64,12 @@ class UserManagementServiceImplTests {
             user.setId(10L);
             return 1;
         });
+        Role role = new Role();
+        role.setId(1L);
+        role.setCode("ADMIN");
+        role.setName("系统管理员");
+        role.setStatus("ACTIVE");
+        when(roleMapper.selectOne(any())).thenReturn(role);
 
         userManagementService.create(new UserCreateRequest(
                 "new-admin",
