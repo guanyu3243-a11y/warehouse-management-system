@@ -7,10 +7,10 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${DB_NAME}"
+      MYSQL_USER: "${DB_USERNAME}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
       TZ: ${TZ:-Europe/London}
     ports:
       - "${MYSQL_PORT:-3306}:3306"
@@ -35,14 +35,19 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       DB_HOST: mysql
       DB_PORT: "3306"
-      DB_NAME: ${DB_NAME}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: "${DB_NAME}"
+      DB_USERNAME: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD}"
       DB_USE_SSL: "false"
       DB_ALLOW_PUBLIC_KEY_RETRIEVAL: "true"
       FLYWAY_ENABLED: "${FLYWAY_ENABLED:-true}"
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRATION_HOURS: ${JWT_EXPIRATION_HOURS:-8}
+      JWT_SECRET: "${JWT_SECRET}"
+      JWT_EXPIRATION_HOURS: "${JWT_EXPIRATION_HOURS:-8}"
+      INIT_ADMIN_ENABLED: "${INIT_ADMIN_ENABLED:-false}"
+      INIT_ADMIN_USERNAME: "${INIT_ADMIN_USERNAME:-}"
+      INIT_ADMIN_PASSWORD: "${INIT_ADMIN_PASSWORD:-}"
+      INIT_ADMIN_EMAIL: "${INIT_ADMIN_EMAIL:-}"
+      INIT_ADMIN_PHONE: "${INIT_ADMIN_PHONE:-}"
       TZ: ${TZ:-Europe/London}
     ports:
       - "${BACKEND_PORT:-8080}:8080"

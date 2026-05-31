@@ -95,6 +95,9 @@ DB_PASSWORD=
 JWT_SECRET=<replace-with-local-dev-secret>
 JWT_EXPIRATION_HOURS=24
 FLYWAY_ENABLED=true
+INIT_ADMIN_ENABLED=false
+INIT_ADMIN_USERNAME=
+INIT_ADMIN_PASSWORD=
 ```
 
 更多环境说明见：
@@ -314,6 +317,16 @@ http://localhost
 ```
 
 生产前端统一请求相对路径 `/api`，由 Nginx 反向代理到 Compose 服务 `backend:8080`。MySQL 服务名为 `mysql`，后端 Docker 环境的 `DB_HOST` 也固定为 `mysql`。数据库初始化和后续变更继续由 Flyway 自动完成。
+
+首次部署可以在 `.env` 中开启初始化管理员：
+
+```text
+INIT_ADMIN_ENABLED=true
+INIT_ADMIN_USERNAME=admin
+INIT_ADMIN_PASSWORD=<replace-with-strong-password>
+```
+
+后端启动时只有在 `users` 表为空时才会创建管理员，密码会使用 BCrypt 加密，并自动绑定 `ADMIN` 角色。
 
 更多部署、备份和回滚说明见：
 

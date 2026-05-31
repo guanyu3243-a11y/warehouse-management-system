@@ -29,6 +29,12 @@ app:
   jwt:
     secret: ${JWT_SECRET:warehouse-management-system-secret-key-change-me-2026}
     expiration-hours: ${JWT_EXPIRATION_HOURS:24}
+  init-admin:
+    enabled: ${INIT_ADMIN_ENABLED:false}
+    username: ${INIT_ADMIN_USERNAME:}
+    password: ${INIT_ADMIN_PASSWORD:}
+    email: ${INIT_ADMIN_EMAIL:}
+    phone: ${INIT_ADMIN_PHONE:}
 
 logging:
   pattern:

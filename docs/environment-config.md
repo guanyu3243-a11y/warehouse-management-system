@@ -63,6 +63,11 @@ V4__add_stock_version.sql
 | `JWT_SECRET` | 开发默认值 | JWT 签名密钥，生产环境必须覆盖 |
 | `JWT_EXPIRATION_HOURS` | `24` | Token 过期小时数 |
 | `FLYWAY_ENABLED` | `true` | 是否启用 Flyway |
+| `INIT_ADMIN_ENABLED` | `false` | 首次部署时是否自动初始化管理员 |
+| `INIT_ADMIN_USERNAME` | 空 | 初始化管理员用户名 |
+| `INIT_ADMIN_PASSWORD` | 空 | 初始化管理员密码，后端会使用 BCrypt 加密保存 |
+| `INIT_ADMIN_EMAIL` | 空 | 初始化管理员邮箱，可选 |
+| `INIT_ADMIN_PHONE` | 空 | 初始化管理员手机号，可选 |
 
 Docker Compose 部署还会使用：
 
@@ -94,3 +99,4 @@ X-Request-Id: <request-id>
 - 已有数据库从 `schema.sql` 升级到 Flyway 时，`baseline-on-migrate` 会记录基线版本，避免重复建表。
 - 新增业务表或字段时，只新增新的 `V*__*.sql` 文件。
 - Docker 部署时，数据库初始化和迁移仍然由 Flyway 自动完成，不手动执行 `schema.sql`。
+- `INIT_ADMIN_ENABLED=true` 只会在 `users` 表为空时创建管理员；已有用户数据时不会重复创建。

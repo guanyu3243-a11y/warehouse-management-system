@@ -46,9 +46,29 @@ cp .env.example .env
 DB_PASSWORD
 MYSQL_ROOT_PASSWORD
 JWT_SECRET
+INIT_ADMIN_PASSWORD
 ```
 
 `.env` 已加入 `.gitignore`，不要提交到 Git。
+
+## 初始化管理员
+
+首次部署可以通过环境变量自动创建管理员账号：
+
+```text
+INIT_ADMIN_ENABLED=true
+INIT_ADMIN_USERNAME=admin
+INIT_ADMIN_PASSWORD=<replace-with-strong-password>
+```
+
+后端启动时会先检测 `users` 表：
+
+- 如果 `users` 表为空，并且 `INIT_ADMIN_ENABLED=true`，自动创建管理员。
+- 密码使用 BCrypt 加密保存。
+- 用户 `role` 写入 `ADMIN`，并同步绑定 `user_roles` 中的 `ADMIN` 角色。
+- 如果 `users` 表已有数据，不会重复创建管理员。
+
+部署完成后建议把 `.env` 中的 `INIT_ADMIN_ENABLED` 改为 `false`，再重启后端，减少误操作风险。
 
 ## 启动
 
