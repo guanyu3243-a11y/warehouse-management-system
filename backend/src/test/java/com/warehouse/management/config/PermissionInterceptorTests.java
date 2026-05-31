@@ -62,4 +62,18 @@ class PermissionInterceptorTests {
         assertThat(interceptor.preHandle(request, response, new Object())).isTrue();
         verify(authorizationService).hasPermission(3L, "stock:view");
     }
+
+    @Test
+    void inventoryAdjustmentConfirmRequiresConfirmPermission() {
+        CurrentUserContext.set(new CurrentUser(4L, "manager", "MANAGER"));
+        MockHttpServletRequest request = new MockHttpServletRequest(
+                "POST",
+                "/api/inventory-adjustments/10/confirm"
+        );
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        when(authorizationService.hasPermission(4L, "inventory-adjustment:confirm")).thenReturn(true);
+
+        assertThat(interceptor.preHandle(request, response, new Object())).isTrue();
+        verify(authorizationService).hasPermission(4L, "inventory-adjustment:confirm");
+    }
 }

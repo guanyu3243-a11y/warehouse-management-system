@@ -61,6 +61,10 @@
           <ElIcon><Upload /></ElIcon>
           <template #title>出库管理</template>
         </ElMenuItem>
+        <ElMenuItem v-if="can('inventory-adjustment:view')" index="/inventory-adjustments">
+          <ElIcon><EditPen /></ElIcon>
+          <template #title>库存调整</template>
+        </ElMenuItem>
         <ElMenuItem v-if="can('stock:view')" index="/stock">
           <ElIcon><DataLine /></ElIcon>
           <template #title>库存查询</template>
@@ -129,6 +133,7 @@ import {
   Collection,
   DataLine,
   Download,
+  EditPen,
   Expand,
   Fold,
   Goods,

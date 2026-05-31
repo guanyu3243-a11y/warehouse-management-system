@@ -117,6 +117,15 @@ const routes = [
         }
       },
       {
+        path: 'inventory-adjustments',
+        name: 'inventory-adjustments',
+        component: () => import('@/views/stock/InventoryAdjustmentList.vue'),
+        meta: {
+          title: '库存调整',
+          permission: 'inventory-adjustment:view'
+        }
+      },
+      {
         path: 'stock',
         name: 'stock',
         component: () => import('@/views/stock/StockView.vue'),

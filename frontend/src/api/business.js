@@ -167,6 +167,7 @@ function createDocumentApi(basePath) {
 
 export const stockInApi = createDocumentApi('/stock-in')
 export const stockOutApi = createDocumentApi('/stock-out')
+export const inventoryAdjustmentApi = createDocumentApi('/inventory-adjustments')
 
 export const operationLogApi = {
   page(params) {

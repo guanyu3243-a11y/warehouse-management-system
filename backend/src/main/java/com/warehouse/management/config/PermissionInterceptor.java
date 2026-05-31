@@ -79,6 +79,9 @@ public class PermissionInterceptor implements HandlerInterceptor {
         if (uri.startsWith("/api/stock-out")) {
             return stockDocumentPermission("stock-out", method, uri);
         }
+        if (uri.startsWith("/api/inventory-adjustments")) {
+            return stockDocumentPermission("inventory-adjustment", method, uri);
+        }
         if (uri.startsWith("/api/stock-movements")) {
             return "stock-movement:view";
         }

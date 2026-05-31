@@ -37,6 +37,7 @@ export const operationModuleOptions = [
   'SUPPLIER',
   'STOCK_IN',
   'STOCK_OUT',
+  'INVENTORY_ADJUSTMENTS',
   'STOCK',
   'STOCK_MOVEMENT',
   'DASHBOARD',
