@@ -126,6 +126,15 @@ const routes = [
         }
       },
       {
+        path: 'stock-takes',
+        name: 'stock-takes',
+        component: () => import('@/views/stock/StockTakeList.vue'),
+        meta: {
+          title: '库存盘点',
+          permission: 'stock-take:view'
+        }
+      },
+      {
         path: 'stock',
         name: 'stock',
         component: () => import('@/views/stock/StockView.vue'),

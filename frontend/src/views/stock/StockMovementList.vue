@@ -40,6 +40,8 @@
         <ElSelect v-model="queryForm.sourceType" clearable placeholder="来源类型">
           <ElOption label="入库单" value="STOCK_IN" />
           <ElOption label="出库单" value="STOCK_OUT" />
+          <ElOption label="库存调整" value="INVENTORY_ADJUSTMENT" />
+          <ElOption label="库存盘点" value="STOCK_TAKE" />
         </ElSelect>
         <ElInput
           v-model.trim="queryForm.sourceNo"

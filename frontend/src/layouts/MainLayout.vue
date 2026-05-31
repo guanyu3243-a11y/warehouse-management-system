@@ -65,6 +65,10 @@
           <ElIcon><EditPen /></ElIcon>
           <template #title>库存调整</template>
         </ElMenuItem>
+        <ElMenuItem v-if="can('stock-take:view')" index="/stock-takes">
+          <ElIcon><Memo /></ElIcon>
+          <template #title>库存盘点</template>
+        </ElMenuItem>
         <ElMenuItem v-if="can('stock:view')" index="/stock">
           <ElIcon><DataLine /></ElIcon>
           <template #title>库存查询</template>
@@ -140,6 +144,7 @@ import {
   House,
   List,
   Lock,
+  Memo,
   OfficeBuilding,
   Setting,
   SwitchButton,

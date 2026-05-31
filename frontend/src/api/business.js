@@ -168,6 +168,23 @@ function createDocumentApi(basePath) {
 export const stockInApi = createDocumentApi('/stock-in')
 export const stockOutApi = createDocumentApi('/stock-out')
 export const inventoryAdjustmentApi = createDocumentApi('/inventory-adjustments')
+export const stockTakeApi = {
+  ...createDocumentApi('/stock-takes'),
+  importFile(id, file) {
+    const formData = new FormData()
+    formData.append('file', file)
+    return http.post(`/stock-takes/${id}/import`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
+  exportItems(id) {
+    return http.get(`/stock-takes/${id}/export`, {
+      responseType: 'blob'
+    })
+  }
+}
 
 export const operationLogApi = {
   page(params) {

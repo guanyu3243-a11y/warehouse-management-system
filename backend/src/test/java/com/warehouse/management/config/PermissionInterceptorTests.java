@@ -76,4 +76,15 @@ class PermissionInterceptorTests {
         assertThat(interceptor.preHandle(request, response, new Object())).isTrue();
         verify(authorizationService).hasPermission(4L, "inventory-adjustment:confirm");
     }
+
+    @Test
+    void stockTakeImportRequiresImportPermission() {
+        CurrentUserContext.set(new CurrentUser(5L, "manager", "MANAGER"));
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/stock-takes/10/import");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        when(authorizationService.hasPermission(5L, "stock-take:import")).thenReturn(true);
+
+        assertThat(interceptor.preHandle(request, response, new Object())).isTrue();
+        verify(authorizationService).hasPermission(5L, "stock-take:import");
+    }
 }

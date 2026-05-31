@@ -82,6 +82,9 @@ public class PermissionInterceptor implements HandlerInterceptor {
         if (uri.startsWith("/api/inventory-adjustments")) {
             return stockDocumentPermission("inventory-adjustment", method, uri);
         }
+        if (uri.startsWith("/api/stock-takes")) {
+            return stockTakePermission(method, uri);
+        }
         if (uri.startsWith("/api/stock-movements")) {
             return "stock-movement:view";
         }
@@ -133,5 +136,15 @@ public class PermissionInterceptor implements HandlerInterceptor {
             return module + ":delete";
         }
         return null;
+    }
+
+    private String stockTakePermission(String method, String uri) {
+        if ("GET".equalsIgnoreCase(method) && uri.endsWith("/export")) {
+            return "stock-take:export";
+        }
+        if ("POST".equalsIgnoreCase(method) && uri.endsWith("/import")) {
+            return "stock-take:import";
+        }
+        return stockDocumentPermission("stock-take", method, uri);
     }
 }
