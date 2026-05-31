@@ -3,8 +3,11 @@ package com.warehouse.management.controller;
 import com.warehouse.management.common.ApiResponse;
 import com.warehouse.management.dto.PageResponse;
 import com.warehouse.management.dto.StockMovementResponse;
+import com.warehouse.management.service.BusinessExcelService;
 import com.warehouse.management.service.StockMovementService;
+import com.warehouse.management.util.ExcelResponseUtil;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,8 +22,11 @@ public class StockMovementController {
 
     private final StockMovementService stockMovementService;
 
-    public StockMovementController(StockMovementService stockMovementService) {
+    private final BusinessExcelService businessExcelService;
+
+    public StockMovementController(StockMovementService stockMovementService, BusinessExcelService businessExcelService) {
         this.stockMovementService = stockMovementService;
+        this.businessExcelService = businessExcelService;
     }
 
     @GetMapping
@@ -50,6 +56,34 @@ public class StockMovementController {
                 startTime,
                 endTime
         ));
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> export(
+            @RequestParam(required = false) Long productId,
+            @RequestParam(required = false) Long warehouseId,
+            @RequestParam(required = false) String movementType,
+            @RequestParam(required = false) String sourceType,
+            @RequestParam(required = false) String sourceNo,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime startTime,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime endTime
+    ) {
+        return ExcelResponseUtil.workbook(
+                "stock-movements.xlsx",
+                businessExcelService.exportStockMovements(
+                        productId,
+                        warehouseId,
+                        movementType,
+                        sourceType,
+                        sourceNo,
+                        startTime,
+                        endTime
+                )
+        );
     }
 
     @GetMapping("/{id}")

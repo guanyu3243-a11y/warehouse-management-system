@@ -5,6 +5,10 @@
         <h1>库存流水</h1>
         <p>追踪每一次库存变化的来源、变更前数量、变更数量和变更后数量。</p>
       </div>
+      <ElButton :loading="exporting" @click="handleExport">
+        <ElIcon><Download /></ElIcon>
+        导出
+      </ElButton>
     </div>
 
     <div class="page-panel">
@@ -112,13 +116,15 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
-import { Refresh, Search } from '@element-plus/icons-vue'
+import { Download, Refresh, Search } from '@element-plus/icons-vue'
 
 import { productApi, stockMovementApi, warehouseApi } from '@/api/business'
 import { stockMovementTypeOptions } from '@/constants/options'
+import { downloadBlob } from '@/utils/download'
 import { formatDateTime, formatDateTimeParam } from '@/utils/format'
 
 const loading = ref(false)
+const exporting = ref(false)
 const records = ref([])
 const products = ref([])
 const warehouses = ref([])
@@ -215,6 +221,26 @@ function handleReset() {
 function handleSizeChange() {
   pagination.page = 1
   loadList()
+}
+
+async function handleExport() {
+  exporting.value = true
+
+  try {
+    const [startTime, endTime] = queryForm.timeRange || []
+    const blob = await stockMovementApi.export({
+      productId: queryForm.productId,
+      warehouseId: queryForm.warehouseId,
+      movementType: queryForm.movementType,
+      sourceType: queryForm.sourceType,
+      sourceNo: queryForm.sourceNo,
+      startTime: formatDateTimeParam(startTime),
+      endTime: formatDateTimeParam(endTime)
+    })
+    downloadBlob(blob, '库存流水.xlsx')
+  } finally {
+    exporting.value = false
+  }
 }
 
 onMounted(async () => {

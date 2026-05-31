@@ -28,10 +28,42 @@ function createCrudApi(basePath) {
   }
 }
 
+function createExcelApi(basePath) {
+  return {
+    export(params) {
+      return http.get(`${basePath}/export`, {
+        params: cleanParams(params),
+        responseType: 'blob'
+      })
+    },
+    importTemplate() {
+      return http.get(`${basePath}/import-template`, {
+        responseType: 'blob'
+      })
+    },
+    importFile(file) {
+      const formData = new FormData()
+      formData.append('file', file)
+      return http.post(`${basePath}/import`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+    }
+  }
+}
+
+function withExcel(api, basePath) {
+  return {
+    ...api,
+    ...createExcelApi(basePath)
+  }
+}
+
 export const categoryApi = createCrudApi('/categories')
-export const productApi = createCrudApi('/products')
-export const warehouseApi = createCrudApi('/warehouses')
-export const supplierApi = createCrudApi('/suppliers')
+export const productApi = withExcel(createCrudApi('/products'), '/products')
+export const warehouseApi = withExcel(createCrudApi('/warehouses'), '/warehouses')
+export const supplierApi = withExcel(createCrudApi('/suppliers'), '/suppliers')
 
 export const dashboardApi = {
   summary() {
@@ -66,6 +98,12 @@ export const stockApi = {
   },
   byProduct(productId) {
     return http.get(`/stock/product/${productId}`)
+  },
+  export(params) {
+    return http.get('/stock/export', {
+      params: cleanParams(params),
+      responseType: 'blob'
+    })
   }
 }
 
@@ -86,6 +124,12 @@ export const stockMovementApi = {
   byWarehouse(warehouseId, params) {
     return http.get(`/stock-movements/warehouse/${warehouseId}`, {
       params: cleanParams(params)
+    })
+  },
+  export(params) {
+    return http.get('/stock-movements/export', {
+      params: cleanParams(params),
+      responseType: 'blob'
     })
   }
 }
@@ -111,6 +155,12 @@ function createDocumentApi(basePath) {
     },
     cancel(id) {
       return http.post(`${basePath}/${id}/cancel`)
+    },
+    export(params) {
+      return http.get(`${basePath}/export`, {
+        params: cleanParams(params),
+        responseType: 'blob'
+      })
     }
   }
 }

@@ -5,10 +5,16 @@
         <h1>{{ title }}</h1>
         <p>{{ description }}</p>
       </div>
-      <ElButton type="primary" @click="openCreate">
-        <ElIcon><Plus /></ElIcon>
-        新建单据
-      </ElButton>
+      <div class="page-actions">
+        <ElButton :loading="exporting" @click="handleExport">
+          <ElIcon><Download /></ElIcon>
+          导出
+        </ElButton>
+        <ElButton type="primary" @click="openCreate">
+          <ElIcon><Plus /></ElIcon>
+          新建单据
+        </ElButton>
+      </div>
     </div>
 
     <div class="page-panel">
@@ -276,10 +282,11 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Refresh, Search } from '@element-plus/icons-vue'
+import { Download, Plus, Refresh, Search } from '@element-plus/icons-vue'
 
 import { categoryApi, productApi, supplierApi, warehouseApi } from '@/api/business'
 import { documentStatusOptions, statusLabel, statusType } from '@/constants/options'
+import { downloadBlob } from '@/utils/download'
 import { formatDateTime, formatMoney } from '@/utils/format'
 
 const props = defineProps({
@@ -307,6 +314,7 @@ const priceField = computed(() => (isStockIn.value ? 'unitCost' : 'unitSalePrice
 const priceLabel = computed(() => (isStockIn.value ? '入库单价' : '出库单价'))
 const loading = ref(false)
 const saving = ref(false)
+const exporting = ref(false)
 const confirmingId = ref(null)
 const cancellingId = ref(null)
 const dialogVisible = ref(false)
@@ -443,6 +451,21 @@ function handleReset() {
 function handleSizeChange() {
   pagination.page = 1
   loadList()
+}
+
+async function handleExport() {
+  exporting.value = true
+
+  try {
+    const blob = await props.api.export({
+      status: queryForm.status,
+      warehouseId: queryForm.warehouseId,
+      supplierId: isStockIn.value ? queryForm.supplierId : undefined
+    })
+    downloadBlob(blob, `${isStockIn.value ? '入库单' : '出库单'}.xlsx`)
+  } finally {
+    exporting.value = false
+  }
 }
 
 function addItem() {
@@ -602,6 +625,13 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .items-toolbar {
   display: flex;
   align-items: center;

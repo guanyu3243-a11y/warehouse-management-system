@@ -4,8 +4,11 @@ import com.warehouse.management.common.ApiResponse;
 import com.warehouse.management.dto.PageResponse;
 import com.warehouse.management.dto.StockInRequest;
 import com.warehouse.management.dto.StockInResponse;
+import com.warehouse.management.service.BusinessExcelService;
 import com.warehouse.management.service.StockInService;
+import com.warehouse.management.util.ExcelResponseUtil;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,8 +24,11 @@ public class StockInController {
 
     private final StockInService stockInService;
 
-    public StockInController(StockInService stockInService) {
+    private final BusinessExcelService businessExcelService;
+
+    public StockInController(StockInService stockInService, BusinessExcelService businessExcelService) {
         this.stockInService = stockInService;
+        this.businessExcelService = businessExcelService;
     }
 
     @GetMapping
@@ -34,6 +40,18 @@ public class StockInController {
             @RequestParam(required = false) Long supplierId
     ) {
         return ApiResponse.success(stockInService.page(page, size, status, warehouseId, supplierId));
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> export(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long warehouseId,
+            @RequestParam(required = false) Long supplierId
+    ) {
+        return ExcelResponseUtil.workbook(
+                "stock-in.xlsx",
+                businessExcelService.exportStockIn(status, warehouseId, supplierId)
+        );
     }
 
     @GetMapping("/{id}")

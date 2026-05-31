@@ -214,22 +214,35 @@ PUT  /api/permissions/{id}/status
 
 GET  /api/categories
 GET  /api/products
+GET  /api/products/export
+GET  /api/products/import-template
+POST /api/products/import
 GET  /api/warehouses
+GET  /api/warehouses/export
+GET  /api/warehouses/import-template
+POST /api/warehouses/import
 GET  /api/suppliers
+GET  /api/suppliers/export
+GET  /api/suppliers/import-template
+POST /api/suppliers/import
 
 GET  /api/stock
 GET  /api/stock/low
+GET  /api/stock/export
 GET  /api/stock-movements
+GET  /api/stock-movements/export
 GET  /api/stock-movements/{id}
 GET  /api/stock-movements/product/{productId}
 GET  /api/stock-movements/warehouse/{warehouseId}
 
 GET  /api/stock-in
+GET  /api/stock-in/export
 POST /api/stock-in
 POST /api/stock-in/{id}/confirm
 POST /api/stock-in/{id}/cancel
 
 GET  /api/stock-out
+GET  /api/stock-out/export
 POST /api/stock-out
 POST /api/stock-out/{id}/confirm
 POST /api/stock-out/{id}/cancel

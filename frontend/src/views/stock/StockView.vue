@@ -5,6 +5,10 @@
         <h1>{{ isLowStockMode ? '低库存预警' : '库存查询' }}</h1>
         <p>{{ isLowStockMode ? '查看已低于商品预警阈值的库存项。' : '按仓库、分类、SKU 或商品名称查询当前库存。' }}</p>
       </div>
+      <ElButton :loading="exporting" @click="handleExport">
+        <ElIcon><Download /></ElIcon>
+        导出
+      </ElButton>
     </div>
 
     <div class="page-panel">
@@ -89,13 +93,15 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { Refresh, Search } from '@element-plus/icons-vue'
+import { Download, Refresh, Search } from '@element-plus/icons-vue'
 
 import { categoryApi, stockApi, warehouseApi } from '@/api/business'
+import { downloadBlob } from '@/utils/download'
 import { formatDateTime } from '@/utils/format'
 
 const route = useRoute()
 const loading = ref(false)
+const exporting = ref(false)
 const records = ref([])
 const categories = ref([])
 const warehouses = ref([])
@@ -180,6 +186,22 @@ function handleReset() {
 function handleSizeChange() {
   pagination.page = 1
   loadList()
+}
+
+async function handleExport() {
+  exporting.value = true
+
+  try {
+    const blob = await stockApi.export({
+      keyword: queryForm.keyword,
+      warehouseId: queryForm.warehouseId,
+      categoryId: queryForm.categoryId,
+      lowStockOnly: isLowStockMode.value ? true : queryForm.lowStockOnly
+    })
+    downloadBlob(blob, `${isLowStockMode.value ? '低库存预警' : '库存查询'}.xlsx`)
+  } finally {
+    exporting.value = false
+  }
 }
 
 watch(

@@ -5,10 +5,24 @@
         <h1>{{ title }}</h1>
         <p>{{ description }}</p>
       </div>
-      <ElButton type="primary" @click="openCreate">
-        <ElIcon><Plus /></ElIcon>
-        新增
-      </ElButton>
+      <div class="page-actions">
+        <ElButton v-if="canDownloadTemplate" :loading="downloadingTemplate" @click="handleDownloadTemplate">
+          <ElIcon><Download /></ElIcon>
+          下载模板
+        </ElButton>
+        <ElButton v-if="canImport" @click="openImport">
+          <ElIcon><Upload /></ElIcon>
+          导入
+        </ElButton>
+        <ElButton v-if="canExport" :loading="exporting" @click="handleExport">
+          <ElIcon><Download /></ElIcon>
+          导出
+        </ElButton>
+        <ElButton type="primary" @click="openCreate">
+          <ElIcon><Plus /></ElIcon>
+          新增
+        </ElButton>
+      </div>
     </div>
 
     <div class="page-panel">
@@ -156,15 +170,56 @@
         <ElButton type="primary" :loading="saving" @click="handleSave">保存</ElButton>
       </template>
     </ElDialog>
+
+    <ElDialog v-model="importDialogVisible" title="导入数据" width="560px" destroy-on-close>
+      <ElUpload
+        drag
+        :auto-upload="false"
+        :limit="1"
+        accept=".xlsx"
+        :on-change="handleFileChange"
+        :on-remove="handleFileRemove"
+      >
+        <ElIcon class="el-icon--upload"><Upload /></ElIcon>
+        <div class="el-upload__text">拖拽 Excel 文件到此处，或点击选择</div>
+        <template #tip>
+          <div class="el-upload__tip">仅支持 .xlsx 文件，请先下载模板并按表头填写。</div>
+        </template>
+      </ElUpload>
+
+      <div v-if="importResult" class="import-result">
+        <ElAlert
+          :title="`导入完成：成功 ${importResult.successCount || 0} 行，失败 ${importResult.failCount || 0} 行`"
+          :type="importResult.failCount ? 'warning' : 'success'"
+          show-icon
+          :closable="false"
+        />
+        <ElTable
+          v-if="importResult.failures?.length"
+          :data="importResult.failures"
+          size="small"
+          max-height="220"
+        >
+          <ElTableColumn prop="rowNumber" label="行号" width="90" />
+          <ElTableColumn prop="reason" label="失败原因" min-width="260" show-overflow-tooltip />
+        </ElTable>
+      </div>
+
+      <template #footer>
+        <ElButton @click="importDialogVisible = false">关闭</ElButton>
+        <ElButton type="primary" :loading="importing" :disabled="!importFile" @click="handleImport">开始导入</ElButton>
+      </template>
+    </ElDialog>
   </section>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Refresh, Search } from '@element-plus/icons-vue'
+import { Download, Plus, Refresh, Search, Upload } from '@element-plus/icons-vue'
 
 import { statusLabel, statusType } from '@/constants/options'
+import { downloadBlob } from '@/utils/download'
 
 const props = defineProps({
   title: {
@@ -199,10 +254,16 @@ const props = defineProps({
 
 const loading = ref(false)
 const saving = ref(false)
+const exporting = ref(false)
+const downloadingTemplate = ref(false)
+const importing = ref(false)
 const records = ref([])
 const dialogVisible = ref(false)
+const importDialogVisible = ref(false)
 const editingId = ref(null)
 const formRef = ref()
+const importFile = ref(null)
+const importResult = ref(null)
 const pagination = reactive({
   page: 1,
   size: 10,
@@ -227,6 +288,9 @@ const formRules = computed(() =>
       ])
   )
 )
+const canExport = computed(() => typeof props.api.export === 'function')
+const canImport = computed(() => typeof props.api.importFile === 'function')
+const canDownloadTemplate = computed(() => typeof props.api.importTemplate === 'function')
 
 function initQueryForm() {
   for (const filter of props.filters) {
@@ -282,6 +346,12 @@ function openCreate() {
   dialogVisible.value = true
 }
 
+function openImport() {
+  importFile.value = null
+  importResult.value = null
+  importDialogVisible.value = true
+}
+
 function openEdit(row) {
   editingId.value = row.id
   initForm(row)
@@ -326,8 +396,78 @@ async function handleDelete(row) {
   loadList()
 }
 
+async function handleExport() {
+  exporting.value = true
+
+  try {
+    const blob = await props.api.export(queryForm)
+    downloadBlob(blob, `${props.title}.xlsx`)
+  } finally {
+    exporting.value = false
+  }
+}
+
+async function handleDownloadTemplate() {
+  downloadingTemplate.value = true
+
+  try {
+    const blob = await props.api.importTemplate()
+    downloadBlob(blob, `${props.title}-导入模板.xlsx`)
+  } finally {
+    downloadingTemplate.value = false
+  }
+}
+
+function handleFileChange(uploadFile) {
+  importFile.value = uploadFile.raw || null
+  importResult.value = null
+}
+
+function handleFileRemove() {
+  importFile.value = null
+}
+
+async function handleImport() {
+  if (!importFile.value) {
+    ElMessage.warning('请选择要导入的 Excel 文件')
+    return
+  }
+
+  importing.value = true
+
+  try {
+    importResult.value = await props.api.importFile(importFile.value)
+    if (!importResult.value?.failCount) {
+      ElMessage.success('导入成功')
+      importDialogVisible.value = false
+    } else if (importResult.value.successCount) {
+      ElMessage.warning('部分数据导入失败')
+    } else {
+      ElMessage.error('导入失败')
+    }
+    await loadList()
+  } finally {
+    importing.value = false
+  }
+}
+
 onMounted(() => {
   initQueryForm()
   loadList()
 })
 </script>
+
+<style scoped>
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.import-result {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+</style>
