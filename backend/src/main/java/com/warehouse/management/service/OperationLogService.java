@@ -1,6 +1,7 @@
 package com.warehouse.management.service;
 
 import com.warehouse.management.dto.OperationLogResponse;
+import com.warehouse.management.dto.OperationLogRecordCommand;
 import com.warehouse.management.dto.PageResponse;
 
 import java.time.LocalDateTime;
@@ -28,4 +29,6 @@ public interface OperationLogService {
             String requestIp,
             String description
     );
+
+    void record(OperationLogRecordCommand command);
 }

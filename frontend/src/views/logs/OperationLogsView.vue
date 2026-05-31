@@ -48,6 +48,7 @@
           <ElTableColumn prop="method" label="方法" width="90" />
           <ElTableColumn prop="requestUri" label="请求地址" min-width="240" show-overflow-tooltip />
           <ElTableColumn prop="requestIp" label="IP" min-width="130" show-overflow-tooltip />
+          <ElTableColumn prop="responseStatus" label="状态码" width="90" />
           <ElTableColumn prop="description" label="描述" min-width="180" show-overflow-tooltip />
           <ElTableColumn label="时间" min-width="170">
             <template #default="{ row }">
@@ -85,6 +86,12 @@
         <ElDescriptionsItem label="请求方法">{{ currentLog.method }}</ElDescriptionsItem>
         <ElDescriptionsItem label="请求地址">{{ currentLog.requestUri }}</ElDescriptionsItem>
         <ElDescriptionsItem label="请求 IP">{{ currentLog.requestIp || '-' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="响应状态">{{ currentLog.responseStatus || '-' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="错误信息">{{ currentLog.errorMessage || '-' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="User-Agent">{{ currentLog.userAgent || '-' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="请求内容">{{ currentLog.requestBody || '-' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="变更前">{{ currentLog.beforeData || '-' }}</ElDescriptionsItem>
+        <ElDescriptionsItem label="变更后">{{ currentLog.afterData || '-' }}</ElDescriptionsItem>
         <ElDescriptionsItem label="描述">{{ currentLog.description || '-' }}</ElDescriptionsItem>
         <ElDescriptionsItem label="时间">{{ formatDateTime(currentLog.createdAt) }}</ElDescriptionsItem>
       </ElDescriptions>

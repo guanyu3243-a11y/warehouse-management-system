@@ -42,6 +42,7 @@ export const operationModuleOptions = [
   'STOCK',
   'STOCK_MOVEMENT',
   'DASHBOARD',
+  'LOGIN_LOG',
   'OPERATION_LOG'
 ]
 
@@ -53,7 +54,8 @@ export const operationActionOptions = [
   'UPDATE',
   'DELETE',
   'CONFIRM',
-  'CANCEL'
+  'CANCEL',
+  'CHANGE_PASSWORD'
 ]
 
 export function findOption(options, value) {

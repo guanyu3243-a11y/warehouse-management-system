@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.warehouse.management.common.BusinessException;
 import com.warehouse.management.dto.OperationLogResponse;
+import com.warehouse.management.dto.OperationLogRecordCommand;
 import com.warehouse.management.dto.PageResponse;
 import com.warehouse.management.entity.OperationLog;
 import com.warehouse.management.mapper.OperationLogMapper;
@@ -77,15 +78,40 @@ public class OperationLogServiceImpl implements OperationLogService {
             String requestIp,
             String description
     ) {
+        record(new OperationLogRecordCommand(
+                userId,
+                module,
+                action,
+                method,
+                requestUri,
+                requestIp,
+                description,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        ));
+    }
+
+    @Override
+    public void record(OperationLogRecordCommand command) {
         try {
             OperationLog operationLog = new OperationLog();
-            operationLog.setUserId(userId);
-            operationLog.setModule(module);
-            operationLog.setAction(action);
-            operationLog.setMethod(method);
-            operationLog.setRequestUri(requestUri);
-            operationLog.setRequestIp(requestIp);
-            operationLog.setDescription(description);
+            operationLog.setUserId(command.userId());
+            operationLog.setModule(command.module());
+            operationLog.setAction(command.action());
+            operationLog.setMethod(command.method());
+            operationLog.setRequestUri(command.requestUri());
+            operationLog.setRequestIp(command.requestIp());
+            operationLog.setDescription(command.description());
+            operationLog.setRequestBody(truncate(command.requestBody(), 4000));
+            operationLog.setResponseStatus(command.responseStatus());
+            operationLog.setErrorMessage(truncate(command.errorMessage(), 500));
+            operationLog.setBeforeData(truncate(command.beforeData(), 4000));
+            operationLog.setAfterData(truncate(command.afterData(), 4000));
+            operationLog.setUserAgent(truncate(command.userAgent(), 255));
             operationLog.setCreatedAt(LocalDateTime.now());
             operationLogMapper.insert(operationLog);
         } catch (DataAccessException exception) {
@@ -103,8 +129,21 @@ public class OperationLogServiceImpl implements OperationLogService {
                 operationLog.getRequestUri(),
                 operationLog.getRequestIp(),
                 operationLog.getDescription(),
+                operationLog.getRequestBody(),
+                operationLog.getResponseStatus(),
+                operationLog.getErrorMessage(),
+                operationLog.getBeforeData(),
+                operationLog.getAfterData(),
+                operationLog.getUserAgent(),
                 operationLog.getCreatedAt()
         );
+    }
+
+    private String truncate(String value, int maxLength) {
+        if (value == null || value.length() <= maxLength) {
+            return value;
+        }
+        return value.substring(0, maxLength);
     }
 
     private boolean hasText(String value) {

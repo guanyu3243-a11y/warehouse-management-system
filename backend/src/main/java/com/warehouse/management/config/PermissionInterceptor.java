@@ -97,6 +97,9 @@ public class PermissionInterceptor implements HandlerInterceptor {
         if (uri.startsWith("/api/operation-logs")) {
             return "operation-log:view";
         }
+        if (uri.startsWith("/api/login-logs")) {
+            return "login-log:view";
+        }
         return null;
     }
 

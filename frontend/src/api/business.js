@@ -196,3 +196,11 @@ export const operationLogApi = {
     return http.get(`/operation-logs/${id}`)
   }
 }
+
+export const loginLogApi = {
+  page(params) {
+    return http.get('/login-logs', {
+      params: cleanParams(params)
+    })
+  }
+}

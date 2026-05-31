@@ -1,9 +1,6 @@
 package com.warehouse.management.dto;
 
-import java.time.LocalDateTime;
-
-public record OperationLogResponse(
-        Long id,
+public record OperationLogRecordCommand(
         Long userId,
         String module,
         String action,
@@ -16,7 +13,6 @@ public record OperationLogResponse(
         String errorMessage,
         String beforeData,
         String afterData,
-        String userAgent,
-        LocalDateTime createdAt
+        String userAgent
 ) {
 }

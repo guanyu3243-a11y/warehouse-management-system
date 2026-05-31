@@ -5,6 +5,9 @@ import com.warehouse.management.config.AdminOnlyInterceptor;
 import com.warehouse.management.config.JwtAuthInterceptor;
 import com.warehouse.management.dto.PageResponse;
 import com.warehouse.management.dto.UserResponse;
+import com.warehouse.management.entity.User;
+import com.warehouse.management.mapper.UserMapper;
+import com.warehouse.management.service.TokenBlacklistService;
 import com.warehouse.management.service.UserManagementService;
 import com.warehouse.management.util.JwtUtil;
 import io.jsonwebtoken.Claims;
@@ -35,6 +38,12 @@ class UserControllerAuthorizationTests {
     @Mock
     private JwtUtil jwtUtil;
 
+    @Mock
+    private TokenBlacklistService tokenBlacklistService;
+
+    @Mock
+    private UserMapper userMapper;
+
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -43,7 +52,7 @@ class UserControllerAuthorizationTests {
                 .standaloneSetup(new UserController(userManagementService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .addInterceptors(
-                        new JwtAuthInterceptor(jwtUtil),
+                        new JwtAuthInterceptor(jwtUtil, tokenBlacklistService, userMapper),
                         new AdminOnlyInterceptor()
                 )
                 .build();
@@ -77,8 +86,14 @@ class UserControllerAuthorizationTests {
     private void mockJwt(String token, String role) {
         Claims claims = mock(Claims.class);
         when(claims.get("userId")).thenReturn(1L);
-        when(claims.get("username", String.class)).thenReturn("tester");
-        when(claims.get("role", String.class)).thenReturn(role);
         when(jwtUtil.parseToken(token)).thenReturn(claims);
+        when(tokenBlacklistService.isBlacklisted(token)).thenReturn(false);
+
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("tester");
+        user.setRole(role);
+        user.setStatus("ACTIVE");
+        when(userMapper.selectById(1L)).thenReturn(user);
     }
 }

@@ -99,6 +99,24 @@ const routes = [
         }
       },
       {
+        path: 'login-logs',
+        name: 'login-logs',
+        component: () => import('@/views/logs/LoginLogsView.vue'),
+        meta: {
+          title: '登录日志',
+          adminOnly: true,
+          permission: 'login-log:view'
+        }
+      },
+      {
+        path: 'change-password',
+        name: 'change-password',
+        component: () => import('@/views/account/ChangePasswordView.vue'),
+        meta: {
+          title: '修改密码'
+        }
+      },
+      {
         path: 'stock-in',
         name: 'stock-in',
         component: () => import('@/views/documents/StockInView.vue'),

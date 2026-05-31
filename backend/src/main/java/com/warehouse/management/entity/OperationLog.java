@@ -26,6 +26,18 @@ public class OperationLog {
 
     private String description;
 
+    private String requestBody;
+
+    private Integer responseStatus;
+
+    private String errorMessage;
+
+    private String beforeData;
+
+    private String afterData;
+
+    private String userAgent;
+
     private LocalDateTime createdAt;
 
     public Long getId() {
@@ -90,6 +102,54 @@ public class OperationLog {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getRequestBody() {
+        return requestBody;
+    }
+
+    public void setRequestBody(String requestBody) {
+        this.requestBody = requestBody;
+    }
+
+    public Integer getResponseStatus() {
+        return responseStatus;
+    }
+
+    public void setResponseStatus(Integer responseStatus) {
+        this.responseStatus = responseStatus;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public String getBeforeData() {
+        return beforeData;
+    }
+
+    public void setBeforeData(String beforeData) {
+        this.beforeData = beforeData;
+    }
+
+    public String getAfterData() {
+        return afterData;
+    }
+
+    public void setAfterData(String afterData) {
+        this.afterData = afterData;
+    }
+
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    public void setUserAgent(String userAgent) {
+        this.userAgent = userAgent;
     }
 
     public LocalDateTime getCreatedAt() {

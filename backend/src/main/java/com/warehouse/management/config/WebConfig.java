@@ -42,7 +42,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns(
                         "/api/users", "/api/users/**",
                         "/api/roles", "/api/roles/**",
-                        "/api/permissions", "/api/permissions/**"
+                        "/api/permissions", "/api/permissions/**",
+                        "/api/login-logs", "/api/login-logs/**"
                 );
 
         registry.addInterceptor(permissionInterceptor)

@@ -15,3 +15,7 @@ export function currentPermissionsApi() {
 export function logoutApi() {
   return http.post('/auth/logout')
 }
+
+export function changePasswordApi(payload) {
+  return http.put('/auth/password', payload)
+}

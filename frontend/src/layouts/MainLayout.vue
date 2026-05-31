@@ -52,6 +52,10 @@
             <ElIcon><Lock /></ElIcon>
             <template #title>权限管理</template>
           </ElMenuItem>
+          <ElMenuItem v-if="authStore.isAdmin && can('login-log:view')" index="/login-logs">
+            <ElIcon><Clock /></ElIcon>
+            <template #title>登录日志</template>
+          </ElMenuItem>
         </ElSubMenu>
         <ElMenuItem v-if="can('stock-in:view')" index="/stock-in">
           <ElIcon><Download /></ElIcon>
@@ -113,6 +117,10 @@
           </button>
           <template #dropdown>
             <ElDropdownMenu>
+              <ElDropdownItem command="changePassword">
+                <ElIcon><Key /></ElIcon>
+                修改密码
+              </ElDropdownItem>
               <ElDropdownItem command="logout">
                 <ElIcon><SwitchButton /></ElIcon>
                 退出登录
@@ -134,6 +142,7 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   ArrowDown,
+  Clock,
   Collection,
   DataLine,
   Download,
@@ -142,6 +151,7 @@ import {
   Fold,
   Goods,
   House,
+  Key,
   List,
   Lock,
   Memo,
@@ -166,7 +176,7 @@ const isCollapsed = ref(false)
 const pageTitle = computed(() => route.meta.title || '工作台')
 const avatarText = computed(() => authStore.username.slice(0, 1).toUpperCase() || 'U')
 const showSystemMenu = computed(
-  () => authStore.isAdmin && (can('user:view') || can('role:view') || can('permission:view'))
+  () => authStore.isAdmin && (can('user:view') || can('role:view') || can('permission:view') || can('login-log:view'))
 )
 
 function can(permission) {
@@ -178,6 +188,11 @@ function toggleSidebar() {
 }
 
 async function handleCommand(command) {
+  if (command === 'changePassword') {
+    router.push('/change-password')
+    return
+  }
+
   if (command === 'logout') {
     await authStore.logout()
     router.push('/login')
