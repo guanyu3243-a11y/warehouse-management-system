@@ -58,9 +58,21 @@ V4__add_stock_version.sql
 | `DB_NAME` | `warehouse_management` | 数据库名称 |
 | `DB_USERNAME` | `root` | 数据库用户名 |
 | `DB_PASSWORD` | 空 | 数据库密码 |
+| `DB_USE_SSL` | `true` in prod | 生产 profile 下 JDBC 是否启用 SSL，Docker 内网部署可设为 `false` |
+| `DB_ALLOW_PUBLIC_KEY_RETRIEVAL` | `false` in prod | MySQL 公钥检索开关，Docker 内网部署可设为 `true` |
 | `JWT_SECRET` | 开发默认值 | JWT 签名密钥，生产环境必须覆盖 |
 | `JWT_EXPIRATION_HOURS` | `24` | Token 过期小时数 |
 | `FLYWAY_ENABLED` | `true` | 是否启用 Flyway |
+
+Docker Compose 部署还会使用：
+
+| 变量名 | 说明 |
+| --- | --- |
+| `MYSQL_ROOT_PASSWORD` | MySQL root 密码 |
+| `FRONTEND_PORT` | 前端 Nginx 对外端口 |
+| `BACKEND_PORT` | 后端对外端口 |
+| `MYSQL_PORT` | MySQL 对外端口 |
+| `TZ` | 容器时区 |
 
 ## RequestId
 
@@ -77,6 +89,8 @@ X-Request-Id: <request-id>
 ## 注意事项
 
 - 生产环境不要使用默认 `JWT_SECRET`。
+- 不要提交 `.env`，只提交 `.env.example`。
 - 不要修改已经执行过的 Flyway 迁移脚本。
 - 已有数据库从 `schema.sql` 升级到 Flyway 时，`baseline-on-migrate` 会记录基线版本，避免重复建表。
 - 新增业务表或字段时，只新增新的 `V*__*.sql` 文件。
+- Docker 部署时，数据库初始化和迁移仍然由 Flyway 自动完成，不手动执行 `schema.sql`。

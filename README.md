@@ -76,11 +76,7 @@ backend/src/main/resources/db/migration/V1__init_schema.sql
 
 如果是已有数据库，`baseline-on-migrate` 会记录当前基线，避免重复建表。
 
-`schema.sql` 暂时保留为手动初始化参考。需要手动初始化时，可以执行：
-
-```bash
-mysql -u root -p < backend/src/main/resources/db/schema.sql
-```
+`schema.sql` 暂时保留为设计参考。日常开发、Docker 部署和生产初始化都应交给 Flyway 自动执行，不需要手动执行 `schema.sql`。
 
 默认数据库名：
 
@@ -96,7 +92,7 @@ DB_PORT=3306
 DB_NAME=warehouse_management
 DB_USERNAME=root
 DB_PASSWORD=
-JWT_SECRET=warehouse-management-system-secret-key-change-me-2026
+JWT_SECRET=<replace-with-local-dev-secret>
 JWT_EXPIRATION_HOURS=24
 FLYWAY_ENABLED=true
 ```
@@ -167,16 +163,17 @@ http://localhost:8080
 
 ## 登录测试流程
 
-1. 启动 MySQL 并执行 `schema.sql`。
+1. 启动 MySQL，并确保数据库可连接。
 2. 启动后端服务。
 3. 启动前端服务。
-4. 调用注册接口创建用户。
+4. 等待后端启动完成，Flyway 会自动执行数据库初始化和迁移。
+5. 调用注册接口创建用户。
 
 ```bash
 curl.exe -X POST http://localhost:8080/api/auth/register -H "Content-Type: application/json" -d "{\"username\":\"admin\",\"password\":\"123456\",\"role\":\"ADMIN\"}"
 ```
 
-5. 打开 `http://localhost:5173/login`，使用刚注册的账号登录。
+6. 打开 `http://localhost:5173/login`，使用刚注册的账号登录。
 
 ## 常用接口
 
@@ -288,14 +285,50 @@ PowerShell 中也可以使用：
 npm.cmd run build
 ```
 
+Docker Compose 配置检查：
+
+```bash
+docker compose --env-file .env.example config
+```
+
+## Docker 部署
+
+Docker 部署是新增能力，不影响本地 IDEA 启动后端和 `npm run dev` 启动前端的方式。
+
+1. 复制环境模板并替换占位值：
+
+```bash
+cp .env.example .env
+```
+
+2. 启动完整环境：
+
+```bash
+docker compose up -d --build
+```
+
+3. 访问前端：
+
+```text
+http://localhost
+```
+
+生产前端统一请求相对路径 `/api`，由 Nginx 反向代理到 Compose 服务 `backend:8080`。MySQL 服务名为 `mysql`，后端 Docker 环境的 `DB_HOST` 也固定为 `mysql`。数据库初始化和后续变更继续由 Flyway 自动完成。
+
+更多部署、备份和回滚说明见：
+
+```text
+docs/deployment.md
+```
+
 ## 当前完成阶段
 
-阶段十：联调、测试和完善。
+阶段十已暂时跳过，当前完成企业升级阶段十一：部署上线准备。
 
-已完成后端核心接口、前端业务页面、JWT 认证、库存出入库流程、Dashboard、操作日志和基础验证命令。
+已完成 Docker 部署配置、Nginx 反向代理、生产环境变量模板、GitHub Actions CI、MySQL 备份脚本和部署文档。
 
 建议 Git commit 信息：
 
 ```text
-test: verify full warehouse management workflow
+chore: add deployment configuration
 ```
