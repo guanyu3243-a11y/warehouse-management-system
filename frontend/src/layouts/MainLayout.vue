@@ -2,10 +2,11 @@
   <ElContainer class="app-shell">
     <ElAside class="app-sidebar" :width="isCollapsed ? '72px' : '236px'">
       <div class="brand" :class="{ 'is-collapsed': isCollapsed }">
-        <div class="brand-mark">仓</div>
+        <div class="brand-mark">
+          <img src="/youbao-logo.jpg" alt="友宝 logo" />
+        </div>
         <div v-if="!isCollapsed" class="brand-copy">
-          <strong>服装仓库管理</strong>
-          <span>Warehouse Console</span>
+          <strong>友宝仓库管理</strong>
         </div>
       </div>
 
@@ -210,8 +211,11 @@ async function handleCommand(command) {
   top: 0;
   height: 100vh;
   overflow: hidden;
-  border-right: 1px solid var(--wms-border);
-  background: #ffffff;
+  border-right: 0;
+  background:
+    linear-gradient(180deg, rgba(15, 118, 110, 0.18), rgba(15, 118, 110, 0) 220px),
+    var(--wms-sidebar);
+  box-shadow: 10px 0 32px rgba(18, 32, 31, 0.12);
   transition: width 0.2s ease;
 }
 
@@ -219,9 +223,9 @@ async function handleCommand(command) {
   display: flex;
   align-items: center;
   gap: 12px;
-  height: 64px;
+  height: 68px;
   padding: 0 16px;
-  border-bottom: 1px solid var(--wms-border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .brand.is-collapsed {
@@ -235,9 +239,16 @@ async function handleCommand(command) {
   height: 36px;
   place-items: center;
   border-radius: 8px;
-  color: #ffffff;
-  background: var(--wms-accent);
-  font-weight: 700;
+  overflow: hidden;
+  padding: 4px;
+  background: #ffffff;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+}
+
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .brand-copy {
@@ -248,28 +259,61 @@ async function handleCommand(command) {
 }
 
 .brand-copy strong {
-  color: var(--wms-ink);
+  color: #f8fafc;
   font-size: 15px;
 }
 
 .brand-copy span {
-  color: var(--wms-muted);
+  color: var(--wms-sidebar-muted);
   font-size: 12px;
 }
 
 .side-menu {
+  --el-menu-bg-color: transparent;
+  --el-menu-text-color: #c7d8d4;
+  --el-menu-hover-bg-color: rgba(255, 255, 255, 0.08);
+  --el-menu-active-color: #ffffff;
   border-right: 0;
-  padding: 8px;
+  padding: 10px 8px;
+  background: transparent;
+}
+
+.side-menu :deep(.el-menu-item),
+.side-menu :deep(.el-sub-menu__title) {
+  height: 42px;
+  margin: 3px 0;
+  border-radius: 8px;
+  color: #c7d8d4;
+}
+
+.side-menu :deep(.el-menu-item:hover),
+.side-menu :deep(.el-sub-menu__title:hover) {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.side-menu :deep(.el-menu-item.is-active) {
+  color: #ffffff;
+  background: rgba(15, 118, 110, 0.88);
+  box-shadow: 0 10px 20px rgba(15, 118, 110, 0.24);
+}
+
+.side-menu :deep(.el-menu--inline) {
+  background: transparent;
+}
+
+.side-menu :deep(.el-icon) {
+  color: inherit;
 }
 
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
-  border-bottom: 1px solid var(--wms-border);
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
+  height: 68px;
+  border-bottom: 1px solid #e6eeeb;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
 }
 
 .header-left {
@@ -283,7 +327,7 @@ async function handleCommand(command) {
   overflow: hidden;
   color: var(--wms-ink);
   font-size: 17px;
-  font-weight: 650;
+  font-weight: 750;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -293,16 +337,18 @@ async function handleCommand(command) {
   max-width: 240px;
   align-items: center;
   gap: 10px;
-  border: 0;
+  border: 1px solid #e6eeeb;
   border-radius: 8px;
   padding: 6px 8px;
   color: var(--wms-ink);
-  background: transparent;
+  background: #ffffff;
   cursor: pointer;
+  box-shadow: 0 6px 16px rgba(18, 32, 31, 0.05);
 }
 
 .user-button:hover {
-  background: #eef4f2;
+  border-color: #c8d6d2;
+  background: #f8faf9;
 }
 
 .user-meta {
@@ -331,9 +377,11 @@ async function handleCommand(command) {
 }
 
 .app-main {
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - 68px);
   padding: 0;
-  background: #f4f6f5;
+  background:
+    linear-gradient(180deg, rgba(15, 118, 110, 0.045), rgba(255, 255, 255, 0) 260px),
+    #f5f7f6;
 }
 
 @media (max-width: 768px) {

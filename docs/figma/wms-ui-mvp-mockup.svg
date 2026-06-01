@@ -1,0 +1,98 @@
+<svg width="1440" height="1024" viewBox="0 0 1440 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="1024" fill="#F5F7F6"/>
+  <rect width="236" height="1024" fill="#12201F"/>
+  <rect width="236" height="220" fill="url(#sidebarGlow)" opacity="0.72"/>
+  <rect x="18" y="18" width="40" height="40" rx="8" fill="#DFF7F2"/>
+  <text x="30" y="44" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#0F302D">仓</text>
+  <text x="72" y="35" font-family="Microsoft YaHei, Arial" font-size="15" font-weight="700" fill="#F8FAFC">服装仓库管理</text>
+  <text x="72" y="54" font-family="Inter, Arial" font-size="12" fill="#91A7A3">Warehouse Console</text>
+  <rect x="12" y="92" width="212" height="42" rx="8" fill="#0F766E"/>
+  <text x="48" y="119" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="700" fill="#FFFFFF">Dashboard</text>
+  <text x="48" y="171" font-family="Microsoft YaHei, Arial" font-size="14" fill="#C7D8D4">商品管理</text>
+  <text x="48" y="214" font-family="Microsoft YaHei, Arial" font-size="14" fill="#C7D8D4">入库管理</text>
+  <text x="48" y="257" font-family="Microsoft YaHei, Arial" font-size="14" fill="#C7D8D4">出库管理</text>
+  <text x="48" y="300" font-family="Microsoft YaHei, Arial" font-size="14" fill="#C7D8D4">库存查询</text>
+  <text x="48" y="343" font-family="Microsoft YaHei, Arial" font-size="14" fill="#C7D8D4">系统管理</text>
+
+  <rect x="236" width="1204" height="68" fill="#FFFFFF" fill-opacity="0.94"/>
+  <line x1="236" y1="67.5" x2="1440" y2="67.5" stroke="#E6EEEB"/>
+  <text x="272" y="43" font-family="Microsoft YaHei, Arial" font-size="17" font-weight="700" fill="#1F2937">Dashboard</text>
+  <rect x="1226" y="16" width="168" height="36" rx="8" fill="#FFFFFF" stroke="#E6EEEB"/>
+  <circle cx="1250" cy="34" r="16" fill="#E7F3F1"/>
+  <text x="1244" y="40" font-family="Inter, Arial" font-size="13" font-weight="700" fill="#0F766E">A</text>
+  <text x="1276" y="30" font-family="Inter, Arial" font-size="13" font-weight="700" fill="#1F2937">admin</text>
+  <text x="1276" y="45" font-family="Inter, Arial" font-size="11" fill="#64748B">ADMIN</text>
+
+  <text x="272" y="124" font-family="Microsoft YaHei, Arial" font-size="24" font-weight="800" fill="#1F2937">Dashboard</text>
+  <text x="272" y="151" font-family="Microsoft YaHei, Arial" font-size="14" fill="#64748B">查看商品、库存、入库、出库和低库存预警的关键数据。</text>
+  <rect x="1286" y="104" width="108" height="36" rx="8" fill="#FFFFFF" stroke="#DBE5E1"/>
+  <text x="1324" y="127" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="700" fill="#1F2937">刷新</text>
+
+  <g>
+    <rect x="272" y="184" width="252" height="118" rx="8" fill="#FFFFFF" stroke="#E4ECE9"/>
+    <rect x="292" y="206" width="44" height="44" rx="8" fill="#0F766E"/>
+    <text x="352" y="226" font-family="Microsoft YaHei, Arial" font-size="13" fill="#64748B">商品总数</text>
+    <text x="352" y="258" font-family="Inter, Arial" font-size="28" font-weight="800" fill="#1F2937">1,286</text>
+  </g>
+  <g>
+    <rect x="540" y="184" width="252" height="118" rx="8" fill="#FFFFFF" stroke="#E4ECE9"/>
+    <rect x="560" y="206" width="44" height="44" rx="8" fill="#2563EB"/>
+    <text x="620" y="226" font-family="Microsoft YaHei, Arial" font-size="13" fill="#64748B">库存总量</text>
+    <text x="620" y="258" font-family="Inter, Arial" font-size="28" font-weight="800" fill="#1F2937">48,920</text>
+  </g>
+  <g>
+    <rect x="808" y="184" width="252" height="118" rx="8" fill="#FFFFFF" stroke="#E4ECE9"/>
+    <rect x="828" y="206" width="44" height="44" rx="8" fill="#B7791F"/>
+    <text x="888" y="226" font-family="Microsoft YaHei, Arial" font-size="13" fill="#64748B">低库存项</text>
+    <text x="888" y="258" font-family="Inter, Arial" font-size="28" font-weight="800" fill="#1F2937">18</text>
+  </g>
+  <g>
+    <rect x="1076" y="184" width="318" height="118" rx="8" fill="#FFFFFF" stroke="#E4ECE9"/>
+    <rect x="1096" y="206" width="44" height="44" rx="8" fill="#047857"/>
+    <text x="1156" y="226" font-family="Microsoft YaHei, Arial" font-size="13" fill="#64748B">今日入库 / 出库</text>
+    <text x="1156" y="258" font-family="Inter, Arial" font-size="28" font-weight="800" fill="#1F2937">860 / 420</text>
+  </g>
+
+  <rect x="272" y="330" width="696" height="458" rx="8" fill="#FFFFFF" stroke="#DBE5E1"/>
+  <text x="296" y="367" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#1F2937">近 7 天出入库趋势</text>
+  <rect x="296" y="404" width="624" height="1" fill="#E6EEEB"/>
+  <text x="296" y="440" font-family="Microsoft YaHei, Arial" font-size="13" fill="#64748B">06-01</text>
+  <rect x="372" y="428" width="360" height="10" rx="5" fill="#0F766E"/>
+  <rect x="372" y="446" width="240" height="10" rx="5" fill="#B7791F"/>
+  <text x="296" y="498" font-family="Microsoft YaHei, Arial" font-size="13" fill="#64748B">06-02</text>
+  <rect x="372" y="486" width="420" height="10" rx="5" fill="#0F766E"/>
+  <rect x="372" y="504" width="290" height="10" rx="5" fill="#B7791F"/>
+  <text x="296" y="556" font-family="Microsoft YaHei, Arial" font-size="13" fill="#64748B">06-03</text>
+  <rect x="372" y="544" width="500" height="10" rx="5" fill="#0F766E"/>
+  <rect x="372" y="562" width="320" height="10" rx="5" fill="#B7791F"/>
+
+  <rect x="992" y="330" width="402" height="458" rx="8" fill="#FFFFFF" stroke="#DBE5E1"/>
+  <text x="1016" y="367" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#1F2937">低库存商品</text>
+  <text x="1304" y="367" font-family="Microsoft YaHei, Arial" font-size="14" font-weight="700" fill="#0B5F59">查看全部</text>
+  <rect x="1016" y="404" width="354" height="44" rx="8" fill="#F8FAF9"/>
+  <text x="1032" y="431" font-family="Inter, Arial" font-size="13" font-weight="700" fill="#334155">SKU-TS-001</text>
+  <text x="1144" y="431" font-family="Microsoft YaHei, Arial" font-size="13" fill="#334155">基础白 T 恤</text>
+  <text x="1308" y="431" font-family="Inter, Arial" font-size="13" font-weight="700" fill="#B42318">6</text>
+  <rect x="1016" y="460" width="354" height="44" rx="8" fill="#FFFFFF" stroke="#EDF2F0"/>
+  <text x="1032" y="487" font-family="Inter, Arial" font-size="13" font-weight="700" fill="#334155">SKU-JK-018</text>
+  <text x="1144" y="487" font-family="Microsoft YaHei, Arial" font-size="13" fill="#334155">春季夹克</text>
+  <text x="1308" y="487" font-family="Inter, Arial" font-size="13" font-weight="700" fill="#B42318">3</text>
+
+  <rect x="272" y="824" width="1122" height="112" rx="8" fill="#FFFFFF" stroke="#DBE5E1"/>
+  <text x="296" y="860" font-family="Microsoft YaHei, Arial" font-size="18" font-weight="700" fill="#1F2937">列表页统一规范</text>
+  <rect x="296" y="882" width="240" height="34" rx="8" fill="#FFFFFF" stroke="#DBE5E1"/>
+  <text x="314" y="904" font-family="Microsoft YaHei, Arial" font-size="13" fill="#64748B">SKU / 商品名称</text>
+  <rect x="552" y="882" width="180" height="34" rx="8" fill="#FFFFFF" stroke="#DBE5E1"/>
+  <text x="570" y="904" font-family="Microsoft YaHei, Arial" font-size="13" fill="#64748B">仓库</text>
+  <rect x="748" y="882" width="78" height="34" rx="8" fill="#0F766E"/>
+  <text x="772" y="904" font-family="Microsoft YaHei, Arial" font-size="13" font-weight="700" fill="#FFFFFF">查询</text>
+  <rect x="838" y="882" width="78" height="34" rx="8" fill="#FFFFFF" stroke="#DBE5E1"/>
+  <text x="862" y="904" font-family="Microsoft YaHei, Arial" font-size="13" font-weight="700" fill="#334155">重置</text>
+
+  <defs>
+    <linearGradient id="sidebarGlow" x1="0" y1="0" x2="236" y2="220" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F766E"/>
+      <stop offset="1" stop-color="#12201F"/>
+    </linearGradient>
+  </defs>
+</svg>

@@ -168,7 +168,7 @@ onMounted(loadDashboard)
 <style scoped>
 .dashboard-page {
   display: grid;
-  gap: 18px;
+  gap: 20px;
 }
 
 .overview-grid {
@@ -182,8 +182,22 @@ onMounted(loadDashboard)
   grid-template-columns: 44px minmax(0, 1fr);
   gap: 4px 12px;
   align-items: center;
-  min-height: 112px;
+  min-height: 118px;
   padding: 18px;
+  border-color: #e4ece9;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 249, 0.96)),
+    #ffffff;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.metric-card:hover {
+  border-color: #cbdad6;
+  box-shadow: var(--wms-shadow);
+  transform: translateY(-1px);
 }
 
 .metric-icon {
@@ -195,6 +209,7 @@ onMounted(loadDashboard)
   border-radius: 8px;
   color: #ffffff;
   font-size: 20px;
+  box-shadow: inset 0 -10px 18px rgba(0, 0, 0, 0.08);
 }
 
 .metric-icon.teal {
@@ -233,7 +248,8 @@ onMounted(loadDashboard)
 .metric-card strong {
   overflow: hidden;
   color: var(--wms-ink);
-  font-size: 26px;
+  font-size: 28px;
+  font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -247,6 +263,7 @@ onMounted(loadDashboard)
 .trend-panel,
 .low-stock-panel {
   padding: 18px;
+  overflow: hidden;
 }
 
 .panel-title {
@@ -261,6 +278,7 @@ onMounted(loadDashboard)
   margin: 0;
   color: var(--wms-ink);
   font-size: 18px;
+  font-weight: 750;
 }
 
 .panel-title a {
@@ -285,7 +303,7 @@ onMounted(loadDashboard)
 }
 
 .bar.out {
-  background: #b45309;
+  background: #b7791f;
 }
 
 @media (max-width: 1120px) {
