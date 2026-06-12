@@ -2,6 +2,7 @@ package com.warehouse.management.service.impl;
 
 import com.warehouse.management.common.BusinessException;
 import com.warehouse.management.dto.AuthLoginRequest;
+import com.warehouse.management.entity.User;
 import com.warehouse.management.mapper.RoleMapper;
 import com.warehouse.management.mapper.UserMapper;
 import com.warehouse.management.mapper.UserRoleMapper;
@@ -95,5 +96,39 @@ class AuthServiceImplSecurityTests {
                 "JUnit"
         );
         verifyNoInteractions(userMapper, jwtUtil, operationLogService);
+    }
+
+    @Test
+    void disabledUserCannotLogin() {
+        User user = new User();
+        user.setId(2L);
+        user.setUsername("disabled-user");
+        user.setPassword("encoded-password");
+        user.setRole("STAFF");
+        user.setStatus("DISABLED");
+
+        when(loginLogService.countRecentFailures(eq("disabled-user"), any(LocalDateTime.class))).thenReturn(0L);
+        when(userMapper.selectOne(any())).thenReturn(user);
+        when(passwordEncoder.matches("password", "encoded-password")).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.login(
+                new AuthLoginRequest("disabled-user", "password"),
+                "127.0.0.1",
+                "JUnit"
+        ))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("User account is disabled")
+                .extracting("code")
+                .isEqualTo(403);
+
+        verify(loginLogService).record(
+                2L,
+                "disabled-user",
+                false,
+                "User account is disabled",
+                "127.0.0.1",
+                "JUnit"
+        );
+        verifyNoInteractions(jwtUtil, operationLogService);
     }
 }

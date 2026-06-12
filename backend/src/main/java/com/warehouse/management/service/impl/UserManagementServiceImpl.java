@@ -147,7 +147,7 @@ public class UserManagementServiceImpl implements UserManagementService {
         ensureUsernameUnique(username, id);
 
         String status = hasText(request.status()) ? normalizeStatus(request.status()) : ACTIVE_STATUS;
-        ensureNotDisablingSelf(id, status);
+        ensureCanSetStatus(user, status);
 
         user.setUsername(username);
         user.setRole(hasText(request.role()) ? normalizeRole(request.role()) : STAFF_ROLE);
@@ -173,7 +173,7 @@ public class UserManagementServiceImpl implements UserManagementService {
     public UserResponse updateStatus(Long id, UserStatusUpdateRequest request) {
         User user = getExisting(id);
         String status = normalizeStatus(request.status());
-        ensureNotDisablingSelf(id, status);
+        ensureCanSetStatus(user, status);
 
         user.setStatus(status);
         userMapper.updateById(user);
@@ -183,16 +183,13 @@ public class UserManagementServiceImpl implements UserManagementService {
     @Override
     @Transactional
     public void delete(Long id) {
-        getExisting(id);
-        Long currentUserId = CurrentUserContext.getRequired().id();
-        if (currentUserId.equals(id)) {
-            throw BusinessException.badRequest("Cannot delete yourself");
+        User user = getExisting(id);
+        ensureCanSetStatus(user, DISABLED_STATUS);
+        if (DISABLED_STATUS.equals(user.getStatus())) {
+            return;
         }
-        userRoleMapper.delete(Wrappers.<UserRole>lambdaQuery().eq(UserRole::getUserId, id));
-        userWarehousePermissionMapper.delete(
-                Wrappers.<UserWarehousePermission>lambdaQuery().eq(UserWarehousePermission::getUserId, id)
-        );
-        userMapper.deleteById(id);
+        user.setStatus(DISABLED_STATUS);
+        userMapper.updateById(user);
     }
 
     @Override
@@ -306,10 +303,25 @@ public class UserManagementServiceImpl implements UserManagementService {
         }
     }
 
-    private void ensureNotDisablingSelf(Long id, String status) {
+    private void ensureCanSetStatus(User user, String status) {
+        if (!DISABLED_STATUS.equals(status) || DISABLED_STATUS.equals(user.getStatus())) {
+            return;
+        }
+
         Long currentUserId = CurrentUserContext.getRequired().id();
-        if (currentUserId.equals(id) && DISABLED_STATUS.equals(status)) {
+        if (currentUserId.equals(user.getId())) {
             throw BusinessException.badRequest("Cannot disable yourself");
+        }
+
+        if (ADMIN_ROLE.equals(user.getRole())) {
+            long activeAdminCount = userMapper.selectCount(
+                    Wrappers.<User>lambdaQuery()
+                            .eq(User::getRole, ADMIN_ROLE)
+                            .eq(User::getStatus, ACTIVE_STATUS)
+            );
+            if (activeAdminCount <= 1) {
+                throw BusinessException.badRequest("Cannot disable the last active ADMIN user");
+            }
         }
     }
 

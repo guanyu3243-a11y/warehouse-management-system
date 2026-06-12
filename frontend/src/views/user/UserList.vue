@@ -78,12 +78,9 @@
                   :type="row.status === 'ACTIVE' ? 'warning' : 'success'"
                   link
                   :disabled="isSelf(row)"
-                  @click="toggleStatus(row)"
+                  @click="toggleUserStatus(row)"
                 >
                   {{ row.status === 'ACTIVE' ? '禁用' : '启用' }}
-                </ElButton>
-                <ElButton size="small" type="danger" link :disabled="isSelf(row)" @click="removeUser(row)">
-                  删除
                 </ElButton>
               </span>
             </template>
@@ -524,12 +521,12 @@ async function savePassword() {
   }
 }
 
-async function toggleStatus(row) {
-  const nextStatus = row.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE'
-  const actionText = nextStatus === 'ACTIVE' ? '启用' : '禁用'
+async function toggleUserStatus(row) {
+  const disabling = row.status === 'ACTIVE'
+  const actionText = disabling ? '禁用' : '启用'
 
   try {
-    await ElMessageBox.confirm(`确认${actionText}用户「${row.username}」？`, `${actionText}用户`, {
+    await ElMessageBox.confirm(`确认${actionText}该用户吗？`, `${actionText}用户「${row.username}」`, {
       type: 'warning',
       confirmButtonText: actionText,
       cancelButtonText: '取消'
@@ -538,26 +535,14 @@ async function toggleStatus(row) {
     return
   }
 
-  await updateUserStatus(row.id, {
-    status: nextStatus
-  })
-  ElMessage.success(`${actionText}成功`)
-  loadList()
-}
-
-async function removeUser(row) {
-  try {
-    await ElMessageBox.confirm(`确认删除用户「${row.username}」？`, '删除用户', {
-      type: 'warning',
-      confirmButtonText: '删除',
-      cancelButtonText: '取消'
+  if (disabling) {
+    await deleteUser(row.id)
+  } else {
+    await updateUserStatus(row.id, {
+      status: 'ACTIVE'
     })
-  } catch {
-    return
   }
-
-  await deleteUser(row.id)
-  ElMessage.success('删除成功')
+  ElMessage.success(`${actionText}成功`)
   loadList()
 }
 
