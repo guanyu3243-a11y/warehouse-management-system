@@ -61,7 +61,20 @@ function withExcel(api, basePath) {
 }
 
 export const categoryApi = createCrudApi('/categories')
-export const productApi = withExcel(createCrudApi('/products'), '/products')
+export const productApi = {
+  ...withExcel(createCrudApi('/products'), '/products'),
+  importCompanyStock(categoryId, file) {
+    const formData = new FormData()
+    formData.append('categoryId', categoryId)
+    formData.append('file', file)
+    return http.post('/products/import-company-stock', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      timeout: 60000
+    })
+  }
+}
 export const warehouseApi = withExcel(createCrudApi('/warehouses'), '/warehouses')
 export const supplierApi = withExcel(createCrudApi('/suppliers'), '/suppliers')
 

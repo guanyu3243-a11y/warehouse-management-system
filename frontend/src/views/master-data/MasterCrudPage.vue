@@ -14,6 +14,7 @@
           <ElIcon><Upload /></ElIcon>
           导入
         </ElButton>
+        <slot name="header-actions" />
         <ElButton v-if="canExport" :loading="exporting" @click="handleExport">
           <ElIcon><Download /></ElIcon>
           导出
@@ -450,6 +451,10 @@ async function handleImport() {
     importing.value = false
   }
 }
+
+defineExpose({
+  refresh: loadList
+})
 
 onMounted(() => {
   initQueryForm()

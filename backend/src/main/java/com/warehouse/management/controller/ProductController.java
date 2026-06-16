@@ -1,11 +1,13 @@
 package com.warehouse.management.controller;
 
 import com.warehouse.management.common.ApiResponse;
+import com.warehouse.management.dto.CompanyProductImportResponse;
 import com.warehouse.management.dto.ExcelImportResultResponse;
 import com.warehouse.management.dto.PageResponse;
 import com.warehouse.management.dto.ProductRequest;
 import com.warehouse.management.dto.ProductResponse;
 import com.warehouse.management.service.BusinessExcelService;
+import com.warehouse.management.service.CompanyProductImportService;
 import com.warehouse.management.service.ProductService;
 import com.warehouse.management.util.ExcelResponseUtil;
 import jakarta.validation.Valid;
@@ -29,9 +31,16 @@ public class ProductController {
 
     private final BusinessExcelService businessExcelService;
 
-    public ProductController(ProductService productService, BusinessExcelService businessExcelService) {
+    private final CompanyProductImportService companyProductImportService;
+
+    public ProductController(
+            ProductService productService,
+            BusinessExcelService businessExcelService,
+            CompanyProductImportService companyProductImportService
+    ) {
         this.productService = productService;
         this.businessExcelService = businessExcelService;
+        this.companyProductImportService = companyProductImportService;
     }
 
     @GetMapping
@@ -74,6 +83,14 @@ public class ProductController {
     @PostMapping("/import")
     public ApiResponse<ExcelImportResultResponse> importProducts(@RequestParam("file") MultipartFile file) {
         return ApiResponse.success(businessExcelService.importProducts(file));
+    }
+
+    @PostMapping("/import-company-stock")
+    public ApiResponse<CompanyProductImportResponse> importCompanyProducts(
+            @RequestParam Long categoryId,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return ApiResponse.success(companyProductImportService.importProducts(categoryId, file));
     }
 
     @PostMapping

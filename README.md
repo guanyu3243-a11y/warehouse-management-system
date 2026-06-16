@@ -332,6 +332,7 @@ DELETE /api/products/{id}
 GET    /api/products/export
 GET    /api/products/import-template
 POST   /api/products/import
+POST   /api/products/import-company-stock
 
 GET    /api/warehouses
 POST   /api/warehouses
@@ -468,6 +469,25 @@ http://localhost
 ```text
 docs/deployment.md
 ```
+
+## 公司服装商品与库存一键导入
+
+在“服装商品”页面点击“导入公司商品表”，选择一个启用分类后，可直接上传公司现用的 `.xls` 数量统计表，也支持校服库存数量 `.xlsx` 文件。
+
+导入规则：
+
+- 公司数量统计表按“型号 + 颜色”自动创建 `XS、S、M、L、XL、2XL、3XL、4XL、5XL、6XL` 全部规格，包括零库存规格。
+- 校服库存数量表按“名称 + 表格标题 + 尺码列”创建规格，例如 `短袖T恤-校服赣-115#`。
+- SKU 自动生成为“商品名称-颜色或款式-尺码”，例如 `V3-白色-S`。
+- 新商品使用所选分类，品牌和季节为空，成本价、销售价和预警阈值默认为 `0`，状态为 `ACTIVE`。
+- 已有相同 SKU 且名称、颜色、尺码一致时复用商品，不覆盖原有分类、品牌、价格等资料。
+- 系统必须且只允许存在一个启用仓库，导入结果写入该仓库。
+- 公司数量统计表中型号为空时继承上一行型号；两类模板的数量空白都按 `0` 处理。
+- 导入数量会覆盖对应规格的当前库存，不会物理删除库存记录。
+- 库存发生变化时会生成 `COMPANY_PRODUCT_IMPORT` 类型的库存流水。
+- 已有 SKU 资料冲突、商品已禁用、数量格式错误、合计不一致或数量低于锁定库存时，整次导入回滚，商品和库存都不会部分写入。
+
+首次正式导入前建议先备份数据库，并在测试环境使用一份文件完成核对。详细操作说明见 `docs/user-guide.md`。
 
 ## CI
 
