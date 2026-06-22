@@ -1,7 +1,7 @@
 package com.warehouse.management.controller;
 
 import com.warehouse.management.common.ApiResponse;
-import com.warehouse.management.dto.PageResponse;
+import com.warehouse.management.dto.StockPageResponse;
 import com.warehouse.management.dto.StockResponse;
 import com.warehouse.management.service.BusinessExcelService;
 import com.warehouse.management.service.StockService;
@@ -29,7 +29,7 @@ public class StockController {
     }
 
     @GetMapping
-    public ApiResponse<PageResponse<StockResponse>> page(
+    public ApiResponse<StockPageResponse> page(
             @RequestParam(defaultValue = "1") long page,
             @RequestParam(name = "size", defaultValue = "10") long pageSize,
             @RequestParam(required = false) Long warehouseId,
@@ -43,7 +43,7 @@ public class StockController {
     }
 
     @GetMapping("/low")
-    public ApiResponse<PageResponse<StockResponse>> lowStock(
+    public ApiResponse<StockPageResponse> lowStock(
             @RequestParam(defaultValue = "1") long page,
             @RequestParam(name = "size", defaultValue = "10") long pageSize,
             @RequestParam(required = false) Long warehouseId,

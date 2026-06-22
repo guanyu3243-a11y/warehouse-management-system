@@ -7,6 +7,7 @@ import com.warehouse.management.dto.ProductRequest;
 import com.warehouse.management.dto.ProductResponse;
 import com.warehouse.management.dto.StockInResponse;
 import com.warehouse.management.dto.StockMovementResponse;
+import com.warehouse.management.dto.StockPageResponse;
 import com.warehouse.management.dto.StockOutResponse;
 import com.warehouse.management.dto.StockResponse;
 import com.warehouse.management.dto.SupplierRequest;
@@ -250,7 +251,7 @@ public class BusinessExcelServiceImpl implements BusinessExcelService {
             String color,
             String size
     ) {
-        PageResponse<StockResponse> page = stockService.page(
+        StockPageResponse page = stockService.page(
                 EXPORT_PAGE,
                 EXPORT_SIZE,
                 warehouseId,

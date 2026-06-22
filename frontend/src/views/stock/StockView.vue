@@ -62,6 +62,14 @@
         </ElButton>
       </div>
 
+      <div class="stock-summary">
+        <span class="stock-summary__title">当前筛选汇总</span>
+        <span>SKU条数：{{ summary.skuCount }}</span>
+        <span>库存总量：{{ summary.totalQuantity }}</span>
+        <span>锁定总量：{{ summary.totalLockedQuantity }}</span>
+        <span>可用总量：{{ summary.totalAvailableQuantity }}</span>
+      </div>
+
       <div class="table-wrap">
         <ElTable v-loading="loading" :data="records" row-key="id">
           <ElTableColumn prop="sku" label="SKU" min-width="130" show-overflow-tooltip />
@@ -122,6 +130,12 @@ const pagination = reactive({
   size: 10,
   total: 0
 })
+const summary = reactive({
+  skuCount: 0,
+  totalQuantity: 0,
+  totalLockedQuantity: 0,
+  totalAvailableQuantity: 0
+})
 const queryForm = reactive({
   keyword: '',
   color: '',
@@ -181,9 +195,18 @@ async function loadList() {
 
     records.value = result.records || []
     pagination.total = result.total || 0
+    applySummary(result.summary)
   } finally {
     loading.value = false
   }
+}
+
+function applySummary(value = {}) {
+  const safeValue = value || {}
+  summary.skuCount = safeValue.skuCount || 0
+  summary.totalQuantity = safeValue.totalQuantity || 0
+  summary.totalLockedQuantity = safeValue.totalLockedQuantity || 0
+  summary.totalAvailableQuantity = safeValue.totalAvailableQuantity || 0
 }
 
 function handleSearch() {
@@ -236,3 +259,24 @@ onMounted(async () => {
   await loadList()
 })
 </script>
+
+<style scoped>
+.stock-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  align-items: center;
+  margin: 14px 0 16px;
+  padding: 12px 14px;
+  color: #42526e;
+  background: #f5fbfa;
+  border: 1px solid #dbece8;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.stock-summary__title {
+  color: #102a43;
+  font-weight: 700;
+}
+</style>

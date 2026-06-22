@@ -2,8 +2,9 @@ package com.warehouse.management.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.warehouse.management.common.BusinessException;
-import com.warehouse.management.dto.PageResponse;
+import com.warehouse.management.dto.StockPageResponse;
 import com.warehouse.management.dto.StockResponse;
+import com.warehouse.management.dto.StockSummaryResponse;
 import com.warehouse.management.entity.Product;
 import com.warehouse.management.entity.Stock;
 import com.warehouse.management.entity.Warehouse;
@@ -36,7 +37,7 @@ public class StockServiceImpl implements StockService {
     }
 
     @Override
-    public PageResponse<StockResponse> page(
+    public StockPageResponse page(
             long page,
             long pageSize,
             Long warehouseId,
@@ -54,17 +55,19 @@ public class StockServiceImpl implements StockService {
                 .filter(entry -> !hasText(productSize) || productMatches(entry.product(), Product::getSize, productSize.trim()))
                 .map(StockEntry::response)
                 .toList();
+        StockSummaryResponse summary = summarize(filtered);
 
         long normalizedPage = normalizePage(page);
         long normalizedSize = normalizeSize(pageSize);
         int fromIndex = (int) Math.min((normalizedPage - 1) * normalizedSize, filtered.size());
         int toIndex = (int) Math.min(fromIndex + normalizedSize, filtered.size());
 
-        return new PageResponse<>(
+        return new StockPageResponse(
                 filtered.subList(fromIndex, toIndex),
                 filtered.size(),
                 normalizedPage,
-                normalizedSize
+                normalizedSize,
+                summary
         );
     }
 
@@ -164,6 +167,24 @@ public class StockServiceImpl implements StockService {
 
     private boolean contains(String value, String keyword) {
         return value != null && value.contains(keyword);
+    }
+
+    private StockSummaryResponse summarize(List<StockResponse> stocks) {
+        long totalQuantity = stocks.stream()
+                .mapToLong(stock -> defaultInt(stock.quantity()))
+                .sum();
+        long totalLockedQuantity = stocks.stream()
+                .mapToLong(stock -> defaultInt(stock.lockedQuantity()))
+                .sum();
+        long totalAvailableQuantity = stocks.stream()
+                .mapToLong(stock -> defaultInt(stock.availableQuantity()))
+                .sum();
+        return new StockSummaryResponse(
+                stocks.size(),
+                totalQuantity,
+                totalLockedQuantity,
+                totalAvailableQuantity
+        );
     }
 
     private boolean hasText(String value) {

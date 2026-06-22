@@ -1,13 +1,13 @@
 package com.warehouse.management.service;
 
-import com.warehouse.management.dto.PageResponse;
+import com.warehouse.management.dto.StockPageResponse;
 import com.warehouse.management.dto.StockResponse;
 
 import java.util.List;
 
 public interface StockService {
 
-    PageResponse<StockResponse> page(
+    StockPageResponse page(
             long page,
             long pageSize,
             Long warehouseId,
