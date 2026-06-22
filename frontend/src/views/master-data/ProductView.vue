@@ -150,6 +150,16 @@ const filters = computed(() => [
     options: categoryOptions.value
   },
   {
+    prop: 'color',
+    label: '颜色',
+    type: 'input'
+  },
+  {
+    prop: 'productSize',
+    label: '尺码',
+    type: 'input'
+  },
+  {
     prop: 'brand',
     label: '品牌',
     type: 'input'

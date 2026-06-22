@@ -56,12 +56,14 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public PageResponse<ProductResponse> page(
             long page,
-            long size,
+            long pageSize,
             String keyword,
             Long categoryId,
             String brand,
             String season,
-            String status
+            String status,
+            String color,
+            String productSize
     ) {
         LambdaQueryWrapper<Product> query = Wrappers.lambdaQuery();
         if (hasText(keyword)) {
@@ -85,10 +87,16 @@ public class ProductServiceImpl implements ProductService {
         if (hasText(status)) {
             query.eq(Product::getStatus, status.trim());
         }
+        if (hasText(color)) {
+            query.like(Product::getColor, color.trim());
+        }
+        if (hasText(productSize)) {
+            query.like(Product::getSize, productSize.trim());
+        }
         query.orderByDesc(Product::getCreatedAt);
 
         IPage<Product> result = productMapper.selectPage(
-                new Page<>(normalizePage(page), normalizeSize(size)),
+                new Page<>(normalizePage(page), normalizeSize(pageSize)),
                 query
         );
         return new PageResponse<>(

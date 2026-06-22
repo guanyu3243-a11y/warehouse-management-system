@@ -8,12 +8,14 @@ public interface ProductService {
 
     PageResponse<ProductResponse> page(
             long page,
-            long size,
+            long pageSize,
             String keyword,
             Long categoryId,
             String brand,
             String season,
-            String status
+            String status,
+            String color,
+            String productSize
     );
 
     ProductResponse getById(Long id);

@@ -3,7 +3,7 @@
     <div class="page-header">
       <div>
         <h1>{{ isLowStockMode ? '低库存预警' : '库存查询' }}</h1>
-        <p>{{ isLowStockMode ? '查看已低于商品预警阈值的库存项。' : '按仓库、分类、SKU 或商品名称查询当前库存。' }}</p>
+        <p>{{ isLowStockMode ? '查看已低于商品预警阈值的库存项。' : '按仓库、分类、颜色、尺码、SKU 或商品名称查询当前库存。' }}</p>
       </div>
       <ElButton :loading="exporting" @click="handleExport">
         <ElIcon><Download /></ElIcon>
@@ -18,6 +18,18 @@
           class="filter-keyword"
           clearable
           placeholder="SKU / 商品名称"
+          @keyup.enter="loadList"
+        />
+        <ElInput
+          v-model.trim="queryForm.color"
+          clearable
+          placeholder="颜色"
+          @keyup.enter="loadList"
+        />
+        <ElInput
+          v-model.trim="queryForm.productSize"
+          clearable
+          placeholder="尺码"
           @keyup.enter="loadList"
         />
         <ElSelect v-model="queryForm.warehouseId" clearable filterable placeholder="仓库">
@@ -112,6 +124,8 @@ const pagination = reactive({
 })
 const queryForm = reactive({
   keyword: '',
+  color: '',
+  productSize: '',
   warehouseId: '',
   categoryId: '',
   lowStockOnly: ''
@@ -157,6 +171,8 @@ async function loadList() {
       page: pagination.page,
       size: pagination.size,
       keyword: queryForm.keyword,
+      color: queryForm.color,
+      productSize: queryForm.productSize,
       warehouseId: queryForm.warehouseId,
       categoryId: queryForm.categoryId,
       lowStockOnly: queryForm.lowStockOnly
@@ -177,6 +193,8 @@ function handleSearch() {
 
 function handleReset() {
   queryForm.keyword = ''
+  queryForm.color = ''
+  queryForm.productSize = ''
   queryForm.warehouseId = ''
   queryForm.categoryId = ''
   queryForm.lowStockOnly = ''
@@ -194,6 +212,8 @@ async function handleExport() {
   try {
     const blob = await stockApi.export({
       keyword: queryForm.keyword,
+      color: queryForm.color,
+      productSize: queryForm.productSize,
       warehouseId: queryForm.warehouseId,
       categoryId: queryForm.categoryId,
       lowStockOnly: isLowStockMode.value ? true : queryForm.lowStockOnly

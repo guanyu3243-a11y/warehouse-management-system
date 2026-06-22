@@ -46,14 +46,16 @@ public class ProductController {
     @GetMapping
     public ApiResponse<PageResponse<ProductResponse>> page(
             @RequestParam(defaultValue = "1") long page,
-            @RequestParam(defaultValue = "10") long size,
+            @RequestParam(name = "size", defaultValue = "10") long pageSize,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String brand,
             @RequestParam(required = false) String season,
-            @RequestParam(required = false) String status
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String color,
+            @RequestParam(required = false) String productSize
     ) {
-        return ApiResponse.success(productService.page(page, size, keyword, categoryId, brand, season, status));
+        return ApiResponse.success(productService.page(page, pageSize, keyword, categoryId, brand, season, status, color, productSize));
     }
 
     @GetMapping("/{id}")
@@ -67,11 +69,13 @@ public class ProductController {
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String brand,
             @RequestParam(required = false) String season,
-            @RequestParam(required = false) String status
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String color,
+            @RequestParam(required = false) String productSize
     ) {
         return ExcelResponseUtil.workbook(
                 "products.xlsx",
-                businessExcelService.exportProducts(keyword, categoryId, brand, season, status)
+                businessExcelService.exportProducts(keyword, categoryId, brand, season, status, color, productSize)
         );
     }
 

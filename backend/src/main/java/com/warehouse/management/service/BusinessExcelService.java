@@ -9,7 +9,15 @@ public interface BusinessExcelService {
 
     byte[] productTemplate();
 
-    byte[] exportProducts(String keyword, Long categoryId, String brand, String season, String status);
+    byte[] exportProducts(
+            String keyword,
+            Long categoryId,
+            String brand,
+            String season,
+            String status,
+            String color,
+            String size
+    );
 
     ExcelImportResultResponse importProducts(MultipartFile file);
 
@@ -25,7 +33,14 @@ public interface BusinessExcelService {
 
     ExcelImportResultResponse importSuppliers(MultipartFile file);
 
-    byte[] exportStock(Long warehouseId, Long categoryId, String keyword, Boolean lowStockOnly);
+    byte[] exportStock(
+            Long warehouseId,
+            Long categoryId,
+            String keyword,
+            Boolean lowStockOnly,
+            String color,
+            String size
+    );
 
     byte[] exportStockMovements(
             Long productId,

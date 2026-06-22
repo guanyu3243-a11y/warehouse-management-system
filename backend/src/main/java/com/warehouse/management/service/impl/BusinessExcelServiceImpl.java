@@ -112,7 +112,15 @@ public class BusinessExcelServiceImpl implements BusinessExcelService {
     }
 
     @Override
-    public byte[] exportProducts(String keyword, Long categoryId, String brand, String season, String status) {
+    public byte[] exportProducts(
+            String keyword,
+            Long categoryId,
+            String brand,
+            String season,
+            String status,
+            String color,
+            String size
+    ) {
         PageResponse<ProductResponse> page = productService.page(
                 EXPORT_PAGE,
                 EXPORT_SIZE,
@@ -120,7 +128,9 @@ public class BusinessExcelServiceImpl implements BusinessExcelService {
                 categoryId,
                 brand,
                 season,
-                status
+                status,
+                color,
+                size
         );
         var rows = page.records().stream()
                 .map(product -> List.of(
@@ -232,14 +242,23 @@ public class BusinessExcelServiceImpl implements BusinessExcelService {
     }
 
     @Override
-    public byte[] exportStock(Long warehouseId, Long categoryId, String keyword, Boolean lowStockOnly) {
+    public byte[] exportStock(
+            Long warehouseId,
+            Long categoryId,
+            String keyword,
+            Boolean lowStockOnly,
+            String color,
+            String size
+    ) {
         PageResponse<StockResponse> page = stockService.page(
                 EXPORT_PAGE,
                 EXPORT_SIZE,
                 warehouseId,
                 categoryId,
                 keyword,
-                lowStockOnly
+                lowStockOnly,
+                color,
+                size
         );
         List<String> headers = List.of(
                 "id",

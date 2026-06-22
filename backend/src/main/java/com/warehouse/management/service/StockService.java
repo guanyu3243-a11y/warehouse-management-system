@@ -9,11 +9,13 @@ public interface StockService {
 
     PageResponse<StockResponse> page(
             long page,
-            long size,
+            long pageSize,
             Long warehouseId,
             Long categoryId,
             String keyword,
-            Boolean lowStockOnly
+            Boolean lowStockOnly,
+            String color,
+            String productSize
     );
 
     List<StockResponse> getByProductId(Long productId);

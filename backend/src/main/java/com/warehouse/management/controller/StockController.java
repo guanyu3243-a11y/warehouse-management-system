@@ -31,24 +31,28 @@ public class StockController {
     @GetMapping
     public ApiResponse<PageResponse<StockResponse>> page(
             @RequestParam(defaultValue = "1") long page,
-            @RequestParam(defaultValue = "10") long size,
+            @RequestParam(name = "size", defaultValue = "10") long pageSize,
             @RequestParam(required = false) Long warehouseId,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Boolean lowStockOnly
+            @RequestParam(required = false) Boolean lowStockOnly,
+            @RequestParam(required = false) String color,
+            @RequestParam(required = false) String productSize
     ) {
-        return ApiResponse.success(stockService.page(page, size, warehouseId, categoryId, keyword, lowStockOnly));
+        return ApiResponse.success(stockService.page(page, pageSize, warehouseId, categoryId, keyword, lowStockOnly, color, productSize));
     }
 
     @GetMapping("/low")
     public ApiResponse<PageResponse<StockResponse>> lowStock(
             @RequestParam(defaultValue = "1") long page,
-            @RequestParam(defaultValue = "10") long size,
+            @RequestParam(name = "size", defaultValue = "10") long pageSize,
             @RequestParam(required = false) Long warehouseId,
             @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) String keyword
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String color,
+            @RequestParam(required = false) String productSize
     ) {
-        return ApiResponse.success(stockService.page(page, size, warehouseId, categoryId, keyword, true));
+        return ApiResponse.success(stockService.page(page, pageSize, warehouseId, categoryId, keyword, true, color, productSize));
     }
 
     @GetMapping("/export")
@@ -56,11 +60,13 @@ public class StockController {
             @RequestParam(required = false) Long warehouseId,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Boolean lowStockOnly
+            @RequestParam(required = false) Boolean lowStockOnly,
+            @RequestParam(required = false) String color,
+            @RequestParam(required = false) String productSize
     ) {
         return ExcelResponseUtil.workbook(
                 "stock.xlsx",
-                businessExcelService.exportStock(warehouseId, categoryId, keyword, lowStockOnly)
+                businessExcelService.exportStock(warehouseId, categoryId, keyword, lowStockOnly, color, productSize)
         );
     }
 

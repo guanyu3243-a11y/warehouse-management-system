@@ -38,20 +38,25 @@ public class StockServiceImpl implements StockService {
     @Override
     public PageResponse<StockResponse> page(
             long page,
-            long size,
+            long pageSize,
             Long warehouseId,
             Long categoryId,
             String keyword,
-            Boolean lowStockOnly
+            Boolean lowStockOnly,
+            String color,
+            String productSize
     ) {
-        List<StockResponse> filtered = loadStockResponses(warehouseId).stream()
-                .filter(stock -> categoryId == null || categoryId.equals(stock.categoryId()))
-                .filter(stock -> !hasText(keyword) || matchesKeyword(stock, keyword.trim()))
-                .filter(stock -> !Boolean.TRUE.equals(lowStockOnly) || Boolean.TRUE.equals(stock.lowStock()))
+        List<StockResponse> filtered = loadStockEntries(warehouseId).stream()
+                .filter(entry -> categoryId == null || categoryId.equals(entry.response().categoryId()))
+                .filter(entry -> !hasText(keyword) || matchesKeyword(entry.response(), keyword.trim()))
+                .filter(entry -> !Boolean.TRUE.equals(lowStockOnly) || Boolean.TRUE.equals(entry.response().lowStock()))
+                .filter(entry -> !hasText(color) || productMatches(entry.product(), Product::getColor, color.trim()))
+                .filter(entry -> !hasText(productSize) || productMatches(entry.product(), Product::getSize, productSize.trim()))
+                .map(StockEntry::response)
                 .toList();
 
         long normalizedPage = normalizePage(page);
-        long normalizedSize = normalizeSize(size);
+        long normalizedSize = normalizeSize(pageSize);
         int fromIndex = (int) Math.min((normalizedPage - 1) * normalizedSize, filtered.size());
         int toIndex = (int) Math.min(fromIndex + normalizedSize, filtered.size());
 
@@ -74,7 +79,18 @@ public class StockServiceImpl implements StockService {
                 .toList();
     }
 
+    private boolean productMatches(Product product, Function<Product, String> getter, String expected) {
+        String actual = product == null ? null : getter.apply(product);
+        return actual != null && actual.contains(expected);
+    }
+
     private List<StockResponse> loadStockResponses(Long warehouseId) {
+        return loadStockEntries(warehouseId).stream()
+                .map(StockEntry::response)
+                .toList();
+    }
+
+    private List<StockEntry> loadStockEntries(Long warehouseId) {
         List<Stock> stocks = stockMapper.selectList(
                 Wrappers.<Stock>lambdaQuery()
                         .eq(warehouseId != null, Stock::getWarehouseId, warehouseId)
@@ -88,7 +104,13 @@ public class StockServiceImpl implements StockService {
         Map<Long, Warehouse> warehouseMap = selectWarehouseMap(stocks);
 
         return stocks.stream()
-                .map(stock -> toResponse(stock, productMap.get(stock.getProductId()), warehouseMap.get(stock.getWarehouseId())))
+                .map(stock -> {
+                    Product product = productMap.get(stock.getProductId());
+                    return new StockEntry(
+                            toResponse(stock, product, warehouseMap.get(stock.getWarehouseId())),
+                            product
+                    );
+                })
                 .toList();
     }
 
@@ -161,5 +183,11 @@ public class StockServiceImpl implements StockService {
             return 10;
         }
         return Math.min(size, 100);
+    }
+
+    private record StockEntry(
+            StockResponse response,
+            Product product
+    ) {
     }
 }
