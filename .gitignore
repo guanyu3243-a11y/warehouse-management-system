@@ -31,3 +31,14 @@ yarn-error.log*
 # Runtime backups
 backups/
 .tmp-m2/
+
+# AI / agent local config
+.agents/
+
+# Docker image exports
+*.tar
+
+# Business data files
+*.xls
+*.xlsx
+
