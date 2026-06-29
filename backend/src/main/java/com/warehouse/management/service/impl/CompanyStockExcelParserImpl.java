@@ -24,10 +24,6 @@ import java.util.Map;
 @Component
 public class CompanyStockExcelParserImpl implements CompanyStockExcelParser {
 
-    private static final List<String> SUPPORTED_SIZES = List.of(
-            "XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL", "6XL"
-    );
-
     @Override
     public List<CompanyStockRow> parse(MultipartFile file) {
         validateFile(file);
@@ -81,15 +77,16 @@ public class CompanyStockExcelParserImpl implements CompanyStockExcelParser {
                     Integer totalColumn = null;
                     for (int columnIndex = 2; columnIndex < row.getLastCellNum(); columnIndex++) {
                         String header = normalizeSize(cellText(row, columnIndex, formatter, evaluator));
-                        if (SUPPORTED_SIZES.contains(header) && !sizeColumns.containsKey(header)) {
-                            sizeColumns.put(header, columnIndex);
-                        } else if ("合计".equals(header) && sizeColumns.size() == SUPPORTED_SIZES.size()) {
+                        if (isTotalHeader(header)) {
                             totalColumn = columnIndex;
                             break;
                         }
+                        if (isSizeHeader(header) && !sizeColumns.containsKey(header)) {
+                            sizeColumns.put(header, columnIndex);
+                        }
                     }
 
-                    if (sizeColumns.keySet().containsAll(SUPPORTED_SIZES) && totalColumn != null) {
+                    if (!sizeColumns.isEmpty() && totalColumn != null) {
                         return new HeaderLocation(
                                 sheet,
                                 rowIndex,
@@ -104,8 +101,11 @@ public class CompanyStockExcelParserImpl implements CompanyStockExcelParser {
                 if ("名称".equals(cellText(row, 0, formatter, evaluator))) {
                     Map<String, Integer> schoolSizeColumns = new LinkedHashMap<>();
                     for (int columnIndex = 1; columnIndex < row.getLastCellNum(); columnIndex++) {
-                        String size = cellText(row, columnIndex, formatter, evaluator);
-                        if (isSchoolUniformSize(size) && !schoolSizeColumns.containsKey(size)) {
+                        String size = normalizeSize(cellText(row, columnIndex, formatter, evaluator));
+                        if (isTotalHeader(size)) {
+                            break;
+                        }
+                        if (isSizeHeader(size) && !schoolSizeColumns.containsKey(size)) {
                             schoolSizeColumns.put(size, columnIndex);
                         }
                     }
@@ -168,9 +168,10 @@ public class CompanyStockExcelParserImpl implements CompanyStockExcelParser {
 
             int total = 0;
             List<CompanyStockRow> rowItems = new ArrayList<>();
-            for (String size : SUPPORTED_SIZES) {
+            for (Map.Entry<String, Integer> entry : header.sizeColumns().entrySet()) {
+                String size = entry.getKey();
                 int quantity = parseQuantity(
-                        cellText(row, header.sizeColumns().get(size), formatter, evaluator),
+                        cellText(row, entry.getValue(), formatter, evaluator),
                         rowIndex,
                         size,
                         true
@@ -185,9 +186,9 @@ public class CompanyStockExcelParserImpl implements CompanyStockExcelParser {
             }
             int declaredTotal = parseQuantity(totalText, rowIndex, "合计", false);
             if (declaredTotal != total) {
-                throw rowError(
-                        rowIndex,
-                        "Row total does not match size quantities: expected " + total + " but was " + declaredTotal
+                throw BusinessException.badRequest(
+                        "第 " + (rowIndex + 1) + " 行总数不一致：尺码数量合计为 " + total
+                                + "，但总计列为 " + declaredTotal + "，请检查该行各尺码数量或总计列。"
                 );
             }
             result.addAll(rowItems);
@@ -296,9 +297,8 @@ public class CompanyStockExcelParserImpl implements CompanyStockExcelParser {
             }
             return value.intValueExact();
         } catch (ArithmeticException | NumberFormatException exception) {
-            throw rowError(
-                    zeroBasedRowIndex,
-                    "Quantity must be a non-negative integer for " + size + ": " + text
+            throw BusinessException.badRequest(
+                    "第 " + (zeroBasedRowIndex + 1) + " 行尺码 " + size + " 数量格式错误，请填写数字。"
             );
         }
     }
@@ -321,12 +321,27 @@ public class CompanyStockExcelParserImpl implements CompanyStockExcelParser {
         return value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
     }
 
-    private boolean isSchoolUniformSize(String value) {
-        return value != null && value.trim().matches("\\d{2,3}#?");
+    private boolean isSizeHeader(String value) {
+        if (value == null || value.isBlank() || isTotalHeader(value)) {
+            return false;
+        }
+        String normalized = normalizeSize(value);
+        return normalized.matches("XS|S|M|L|XL")
+                || normalized.matches("(?:[2-9]|10)XL")
+                || normalized.matches("X{2,10}L")
+                || normalized.matches("\\d{2,3}#?");
+    }
+
+    private boolean isTotalHeader(String value) {
+        String normalized = normalizeSize(value);
+        return "合计".equals(normalized)
+                || "总计".equals(normalized)
+                || "总数".equals(normalized)
+                || "TOTAL".equals(normalized);
     }
 
     private boolean isSummary(String model) {
-        return "合计".equals(model) || "合计总量".equals(model);
+        return "合计".equals(model) || "合计总量".equals(model) || "总计".equals(model) || "总数".equals(model);
     }
 
     private BusinessException rowError(int zeroBasedRowIndex, String message) {
