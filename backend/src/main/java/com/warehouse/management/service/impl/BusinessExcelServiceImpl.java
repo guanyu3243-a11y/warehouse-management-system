@@ -23,6 +23,7 @@ import com.warehouse.management.service.StockOutService;
 import com.warehouse.management.service.StockService;
 import com.warehouse.management.service.SupplierService;
 import com.warehouse.management.service.WarehouseService;
+import com.warehouse.management.util.PaginationSupport;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,6 +31,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 @Service
 public class BusinessExcelServiceImpl implements BusinessExcelService {
@@ -122,7 +124,7 @@ public class BusinessExcelServiceImpl implements BusinessExcelService {
             String color,
             String size
     ) {
-        PageResponse<ProductResponse> page = productService.page(
+        PageResponse<ProductResponse> page = exportPage(() -> productService.page(
                 EXPORT_PAGE,
                 EXPORT_SIZE,
                 keyword,
@@ -132,7 +134,7 @@ public class BusinessExcelServiceImpl implements BusinessExcelService {
                 status,
                 color,
                 size
-        );
+        ));
         var rows = page.records().stream()
                 .map(product -> List.of(
                         value(product.sku()),
@@ -177,7 +179,9 @@ public class BusinessExcelServiceImpl implements BusinessExcelService {
 
     @Override
     public byte[] exportWarehouses(String keyword, String status) {
-        PageResponse<WarehouseResponse> page = warehouseService.page(EXPORT_PAGE, EXPORT_SIZE, keyword, status);
+        PageResponse<WarehouseResponse> page = exportPage(
+                () -> warehouseService.page(EXPORT_PAGE, EXPORT_SIZE, keyword, status)
+        );
         var rows = page.records().stream()
                 .map(warehouse -> List.of(
                         value(warehouse.code()),
@@ -212,7 +216,9 @@ public class BusinessExcelServiceImpl implements BusinessExcelService {
 
     @Override
     public byte[] exportSuppliers(String keyword, String status) {
-        PageResponse<SupplierResponse> page = supplierService.page(EXPORT_PAGE, EXPORT_SIZE, keyword, status);
+        PageResponse<SupplierResponse> page = exportPage(
+                () -> supplierService.page(EXPORT_PAGE, EXPORT_SIZE, keyword, status)
+        );
         var rows = page.records().stream()
                 .map(supplier -> List.of(
                         value(supplier.code()),
@@ -251,7 +257,7 @@ public class BusinessExcelServiceImpl implements BusinessExcelService {
             String color,
             String size
     ) {
-        StockPageResponse page = stockService.page(
+        StockPageResponse page = exportPage(() -> stockService.page(
                 EXPORT_PAGE,
                 EXPORT_SIZE,
                 warehouseId,
@@ -260,7 +266,7 @@ public class BusinessExcelServiceImpl implements BusinessExcelService {
                 lowStockOnly,
                 color,
                 size
-        );
+        ));
         List<String> headers = List.of(
                 "id",
                 "productId",
@@ -308,7 +314,7 @@ public class BusinessExcelServiceImpl implements BusinessExcelService {
             LocalDateTime startTime,
             LocalDateTime endTime
     ) {
-        PageResponse<StockMovementResponse> page = stockMovementService.page(
+        PageResponse<StockMovementResponse> page = exportPage(() -> stockMovementService.page(
                 EXPORT_PAGE,
                 EXPORT_SIZE,
                 productId,
@@ -318,7 +324,7 @@ public class BusinessExcelServiceImpl implements BusinessExcelService {
                 sourceNo,
                 startTime,
                 endTime
-        );
+        ));
         List<String> headers = List.of(
                 "id",
                 "movementNo",
@@ -366,7 +372,9 @@ public class BusinessExcelServiceImpl implements BusinessExcelService {
 
     @Override
     public byte[] exportStockIn(String status, Long warehouseId, Long supplierId) {
-        PageResponse<StockInResponse> page = stockInService.page(EXPORT_PAGE, EXPORT_SIZE, status, warehouseId, supplierId);
+        PageResponse<StockInResponse> page = exportPage(
+                () -> stockInService.page(EXPORT_PAGE, EXPORT_SIZE, status, warehouseId, supplierId)
+        );
         List<String> headers = List.of(
                 "id",
                 "stockInNo",
@@ -404,7 +412,9 @@ public class BusinessExcelServiceImpl implements BusinessExcelService {
 
     @Override
     public byte[] exportStockOut(String status, Long warehouseId) {
-        PageResponse<StockOutResponse> page = stockOutService.page(EXPORT_PAGE, EXPORT_SIZE, status, warehouseId);
+        PageResponse<StockOutResponse> page = exportPage(
+                () -> stockOutService.page(EXPORT_PAGE, EXPORT_SIZE, status, warehouseId)
+        );
         List<String> headers = List.of(
                 "id",
                 "stockOutNo",
@@ -520,6 +530,10 @@ public class BusinessExcelServiceImpl implements BusinessExcelService {
 
     private String failureMessage(RuntimeException e) {
         return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+    }
+
+    private <T> T exportPage(Supplier<T> action) {
+        return PaginationSupport.withMaxPageSize(EXPORT_SIZE, action);
     }
 
     @FunctionalInterface

@@ -8,6 +8,7 @@ import com.warehouse.management.entity.Warehouse;
 import com.warehouse.management.mapper.ProductMapper;
 import com.warehouse.management.mapper.StockMapper;
 import com.warehouse.management.mapper.WarehouseMapper;
+import com.warehouse.management.util.PaginationSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -211,6 +213,44 @@ class StockServiceImplTests {
         assertThat(response.summary().totalAvailableQuantity()).isZero();
     }
 
+    @Test
+    void pageCapsNormalRequestsAtOneHundredRows() {
+        mockBulkStocks(150);
+
+        StockPageResponse response = stockService.page(
+                1,
+                10000,
+                null,
+                null,
+                null,
+                false,
+                null,
+                null
+        );
+
+        assertThat(response.records()).hasSize(100);
+        assertThat(response.total()).isEqualTo(150);
+    }
+
+    @Test
+    void pageAllowsExportRequestsAboveOneHundredRows() {
+        mockBulkStocks(150);
+
+        StockPageResponse response = PaginationSupport.withMaxPageSize(10000, () -> stockService.page(
+                1,
+                10000,
+                null,
+                null,
+                null,
+                false,
+                null,
+                null
+        ));
+
+        assertThat(response.records()).hasSize(150);
+        assertThat(response.total()).isEqualTo(150);
+    }
+
     private Stock stock(Long id, Long productId, Long warehouseId) {
         return stock(id, productId, warehouseId, 10, 0);
     }
@@ -235,6 +275,18 @@ class StockServiceImplTests {
 
     private void mockWarehouses(Warehouse... warehouses) {
         when(warehouseMapper.selectBatchIds(any())).thenReturn(List.of(warehouses));
+    }
+
+    private void mockBulkStocks(int count) {
+        List<Stock> stocks = IntStream.rangeClosed(1, count)
+                .mapToObj(index -> stock((long) index, 1000L + index, 10L))
+                .toList();
+        List<Product> products = IntStream.rangeClosed(1, count)
+                .mapToObj(index -> product(1000L + index, "SKU-" + index, "商品" + index, "黑色", "160#"))
+                .toList();
+        when(stockMapper.selectList(any())).thenReturn(stocks);
+        when(productMapper.selectBatchIds(any())).thenReturn(products);
+        when(warehouseMapper.selectBatchIds(any())).thenReturn(List.of(warehouse(10L)));
     }
 
     private Product product(Long id, String sku, String name, String color, String size) {

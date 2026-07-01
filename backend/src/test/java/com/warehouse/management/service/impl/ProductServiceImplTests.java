@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.enums.SqlKeyword;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.warehouse.management.util.PaginationSupport;
 import com.warehouse.management.entity.Product;
 import com.warehouse.management.mapper.CategoryMapper;
 import com.warehouse.management.mapper.ProductMapper;
@@ -68,5 +69,35 @@ class ProductServiceImplTests {
         assertThat(queryCaptor.getValue().getExpression().getNormal())
                 .filteredOn(SqlKeyword.LIKE::equals)
                 .hasSizeGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void pageCapsNormalRequestsAtOneHundredRows() {
+        Page<Product> emptyPage = new Page<>(1, 100);
+        when(productMapper.selectPage(any(), any())).thenReturn(emptyPage);
+
+        productService.page(1, 10000, null, null, null, null, null, null, null);
+
+        ArgumentCaptor<IPage<Product>> pageCaptor = ArgumentCaptor.forClass(IPage.class);
+        verify(productMapper).selectPage(pageCaptor.capture(), any());
+
+        assertThat(pageCaptor.getValue().getSize()).isEqualTo(100);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void pageAllowsExportRequestsUpToExportLimit() {
+        Page<Product> emptyPage = new Page<>(1, 10000);
+        when(productMapper.selectPage(any(), any())).thenReturn(emptyPage);
+
+        PaginationSupport.withMaxPageSize(10000, () ->
+                productService.page(1, 10000, null, null, null, null, null, null, null)
+        );
+
+        ArgumentCaptor<IPage<Product>> pageCaptor = ArgumentCaptor.forClass(IPage.class);
+        verify(productMapper).selectPage(pageCaptor.capture(), any());
+
+        assertThat(pageCaptor.getValue().getSize()).isEqualTo(10000);
     }
 }

@@ -232,9 +232,6 @@ public class StockMovementServiceImpl implements StockMovementService {
     }
 
     private long normalizeSize(long size) {
-        if (size < 1) {
-            return 10;
-        }
-        return Math.min(size, 100);
+        return com.warehouse.management.util.PaginationSupport.normalizeSize(size);
     }
 }
