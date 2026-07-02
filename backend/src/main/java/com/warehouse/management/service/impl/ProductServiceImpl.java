@@ -73,7 +73,11 @@ public class ProductServiceImpl implements ProductService {
                     .or()
                     .like(Product::getSku, value)
                     .or()
-                    .like(Product::getBrand, value));
+                    .like(Product::getBrand, value)
+                    .or()
+                    .like(Product::getColor, value)
+                    .or()
+                    .like(Product::getSize, value));
         }
         if (categoryId != null) {
             query.eq(Product::getCategoryId, categoryId);

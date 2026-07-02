@@ -2,7 +2,9 @@ package com.warehouse.management.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.enums.SqlKeyword;
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.warehouse.management.util.PaginationSupport;
 import com.warehouse.management.entity.Product;
@@ -14,6 +16,7 @@ import com.warehouse.management.mapper.StockOutItemMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -45,6 +48,7 @@ class ProductServiceImplTests {
 
     @BeforeEach
     void setUp() {
+        TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), ""), Product.class);
         productService = new ProductServiceImpl(
                 productMapper,
                 categoryMapper,
@@ -69,6 +73,24 @@ class ProductServiceImplTests {
         assertThat(queryCaptor.getValue().getExpression().getNormal())
                 .filteredOn(SqlKeyword.LIKE::equals)
                 .hasSizeGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void pageKeywordSearchIncludesColorAndSize() {
+        Page<Product> emptyPage = new Page<>(1, 10);
+        when(productMapper.selectPage(any(), any())).thenReturn(emptyPage);
+
+        productService.page(1, 10, "7XL", null, null, null, null, null, null);
+
+        ArgumentCaptor<LambdaQueryWrapper<Product>> queryCaptor =
+                ArgumentCaptor.forClass(LambdaQueryWrapper.class);
+        verify(productMapper).selectPage(any(IPage.class), queryCaptor.capture());
+
+        LambdaQueryWrapper<Product> query = queryCaptor.getValue();
+        query.getSqlSegment();
+
+        assertThat(query.getParamNameValuePairs()).hasSize(5);
     }
 
     @Test

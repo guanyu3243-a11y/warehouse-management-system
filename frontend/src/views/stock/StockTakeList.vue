@@ -168,14 +168,64 @@
       </div>
 
       <ElTable :data="form.items" row-key="clientId" border>
-        <ElTableColumn label="商品" min-width="260">
+        <ElTableColumn label="型号" min-width="150">
           <template #default="{ row }">
-            <ElSelect v-model="row.productId" filterable placeholder="请选择商品">
+            <ElSelect
+              v-model="row.productModel"
+              clearable
+              filterable
+              remote
+              reserve-keyword
+              :loading="row.productLoading"
+              :remote-method="(keyword) => searchRowModels(row, keyword)"
+              placeholder="型号"
+              @change="handleRowModelChange(row)"
+              @visible-change="(visible) => handleRowModelVisibleChange(row, visible)"
+            >
               <ElOption
-                v-for="product in productOptions"
-                :key="product.value"
-                :label="product.label"
-                :value="product.value"
+                v-for="option in rowModelOptions(row)"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </ElSelect>
+          </template>
+        </ElTableColumn>
+        <ElTableColumn label="颜色" min-width="130">
+          <template #default="{ row }">
+            <ElSelect
+              v-model="row.productColor"
+              clearable
+              filterable
+              :disabled="!row.productModel"
+              placeholder="颜色"
+              @change="handleRowColorChange(row)"
+              @visible-change="(visible) => handleRowColorVisibleChange(row, visible)"
+            >
+              <ElOption
+                v-for="option in rowColorOptions(row)"
+                :key="option"
+                :label="option"
+                :value="option"
+              />
+            </ElSelect>
+          </template>
+        </ElTableColumn>
+        <ElTableColumn label="尺码" min-width="130">
+          <template #default="{ row }">
+            <ElSelect
+              v-model="row.productId"
+              clearable
+              filterable
+              :disabled="!row.productModel || !row.productColor"
+              placeholder="尺码"
+              @change="handleRowProductChange(row)"
+            >
+              <ElOption
+                v-for="product in rowSizeProductOptions(row)"
+                :key="product.id"
+                :label="product.size || '-'"
+                :value="product.id"
               />
             </ElSelect>
           </template>
@@ -272,8 +322,8 @@ const importTargetId = ref(null)
 const formRef = ref()
 const fileInputRef = ref()
 const records = ref([])
-const products = ref([])
 const warehouses = ref([])
+const selectedProducts = ref(new Map())
 const currentDocument = ref(null)
 const pagination = reactive({
   page: 1,
@@ -297,12 +347,6 @@ const warehouseOptions = computed(() =>
     value: item.id
   }))
 )
-const productOptions = computed(() =>
-  products.value.map((item) => ({
-    label: `${item.sku} - ${item.name}`,
-    value: item.id
-  }))
-)
 
 function signedQuantity(value) {
   const number = Number(value || 0)
@@ -320,38 +364,187 @@ function quantityClass(value) {
   return 'text-muted'
 }
 
+function productModelValue(product = {}) {
+  return product.name || String(product.sku || '').split('-')[0] || ''
+}
+
+function productsForSelection(sourceProducts, model, color = '') {
+  return (sourceProducts || [])
+    .filter((product) => !model || productModelValue(product) === model)
+    .filter((product) => !color || product.color === color)
+    .sort((left, right) => String(left.size || '').localeCompare(String(right.size || ''), 'zh-Hans', { numeric: true }))
+}
+
+function modelOptionsFromProducts(sourceProducts) {
+  const models = new Map()
+
+  ;(sourceProducts || []).forEach((product) => {
+    const model = productModelValue(product)
+
+    if (model && !models.has(model)) {
+      models.set(model, {
+        label: model,
+        value: model
+      })
+    }
+  })
+
+  return [...models.values()]
+}
+
+function colorOptionsFromProducts(sourceProducts, model) {
+  return [
+    ...new Set(
+      productsForSelection(sourceProducts, model)
+        .map((product) => product.color)
+        .filter(Boolean)
+    )
+  ]
+}
+
+function rowModelOptions(row) {
+  return modelOptionsFromProducts(row.productCandidates)
+}
+
+function rowColorOptions(row) {
+  return colorOptionsFromProducts(row.productCandidates, row.productModel)
+}
+
+function rowSizeProductOptions(row) {
+  return productsForSelection(row.productCandidates, row.productModel, row.productColor)
+}
+
+function rememberProduct(product) {
+  if (!product?.id) {
+    return
+  }
+
+  const next = new Map(selectedProducts.value)
+  next.set(product.id, product)
+  selectedProducts.value = next
+}
+
+function rememberProducts(sourceProducts) {
+  sourceProducts.forEach(rememberProduct)
+}
+
+async function fetchProductCandidates(keyword = '') {
+  const result = await productApi.page({
+    page: 1,
+    size: 100,
+    status: 'ACTIVE',
+    keyword: keyword?.trim()
+  })
+
+  const records = result.records || []
+  rememberProducts(records)
+  return records
+}
+
+async function searchRowModels(row, keyword = '') {
+  const requestId = (row.productSearchRequestId || 0) + 1
+  row.productSearchRequestId = requestId
+  row.productLoading = true
+
+  try {
+    const records = await fetchProductCandidates(keyword)
+
+    if (row.productSearchRequestId === requestId) {
+      row.productCandidates = records
+    }
+  } finally {
+    if (row.productSearchRequestId === requestId) {
+      row.productLoading = false
+    }
+  }
+}
+
+function handleRowModelVisibleChange(row, visible) {
+  if (visible && !row.productCandidates.length) {
+    searchRowModels(row, row.productModel)
+  }
+}
+
+function handleRowColorVisibleChange(row, visible) {
+  if (visible && row.productModel && !row.productCandidates.length) {
+    searchRowModels(row, row.productModel)
+  }
+}
+
+function handleRowModelChange(row) {
+  row.productColor = ''
+  row.productId = ''
+
+  if (row.productModel) {
+    searchRowModels(row, row.productModel)
+  }
+}
+
+function handleRowColorChange(row) {
+  row.productId = ''
+}
+
+function handleRowProductChange(row) {
+  const product = row.productCandidates.find((item) => item.id === row.productId)
+
+  if (!product) {
+    return
+  }
+
+  row.productModel = productModelValue(product)
+  row.productColor = product.color || ''
+  rememberProduct(product)
+}
+
+async function rememberDocumentProducts(items) {
+  const productIds = [...new Set(items.map((item) => item.productId).filter(Boolean))]
+  const loadedProducts = await Promise.all(
+    productIds.map(async (productId) => {
+      try {
+        return await productApi.detail(productId)
+      } catch {
+        return null
+      }
+    })
+  )
+
+  loadedProducts.filter(Boolean).forEach(rememberProduct)
+}
+
 function createEmptyItem(item = {}) {
+  const product = item.productId ? selectedProducts.value.get(item.productId) : null
+  const productModel = item.productModel || (product ? productModelValue(product) : item.productName || '')
+  const productColor = item.productColor || product?.color || ''
+
   return {
     clientId: `${Date.now()}-${Math.random()}`,
     productId: item.productId || '',
+    productModel,
+    productColor,
+    productCandidates: product ? [product] : [],
+    productLoading: false,
+    productSearchRequestId: 0,
     actualQuantity: item.actualQuantity ?? 0,
     remark: item.remark || ''
   }
 }
 
-function resetForm(document = {}) {
+async function resetForm(document = {}) {
   form.warehouseId = document.warehouseId || ''
   form.title = document.title || ''
   form.remark = document.remark || ''
+  await rememberDocumentProducts(document.items || [])
   form.items = document.items?.length ? document.items.map(createEmptyItem) : [createEmptyItem()]
 }
 
 async function loadOptions() {
-  const [warehouseResult, productResult] = await Promise.all([
-    warehouseApi.page({
-      page: 1,
-      size: 200,
-      status: 'ACTIVE'
-    }),
-    productApi.page({
-      page: 1,
-      size: 500,
-      status: 'ACTIVE'
-    })
-  ])
+  const warehouseResult = await warehouseApi.page({
+    page: 1,
+    size: 200,
+    status: 'ACTIVE'
+  })
 
   warehouses.value = warehouseResult.records || []
-  products.value = productResult.records || []
 }
 
 async function loadList() {
@@ -436,9 +629,10 @@ function buildPayload() {
   }
 }
 
-function openCreate() {
+async function openCreate() {
   editingId.value = null
-  resetForm()
+  selectedProducts.value = new Map()
+  await resetForm()
   dialogVisible.value = true
 }
 
@@ -446,7 +640,7 @@ async function openEdit(row) {
   const detail = await stockTakeApi.detail(row.id)
 
   editingId.value = detail.id
-  resetForm(detail)
+  await resetForm(detail)
   dialogVisible.value = true
 }
 

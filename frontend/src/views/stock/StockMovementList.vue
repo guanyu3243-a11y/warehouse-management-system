@@ -13,7 +13,17 @@
 
     <div class="page-panel">
       <div class="filter-bar">
-        <ElSelect v-model="queryForm.productId" clearable filterable placeholder="商品">
+        <ElSelect
+          v-model="queryForm.productId"
+          clearable
+          filterable
+          remote
+          reserve-keyword
+          :remote-method="searchProducts"
+          :loading="productLoading"
+          placeholder="输入SKU/型号/颜色/尺码搜索商品"
+          @visible-change="handleProductVisibleChange"
+        >
           <ElOption
             v-for="product in productOptions"
             :key="product.value"
@@ -127,9 +137,11 @@ import { formatDateTime, formatDateTimeParam } from '@/utils/format'
 
 const loading = ref(false)
 const exporting = ref(false)
+const productLoading = ref(false)
 const records = ref([])
 const products = ref([])
 const warehouses = ref([])
+let productSearchRequestId = 0
 const pagination = reactive({
   page: 1,
   size: 10,
@@ -146,7 +158,7 @@ const queryForm = reactive({
 
 const productOptions = computed(() =>
   products.value.map((item) => ({
-    label: `${item.sku} - ${item.name}`,
+    label: `${item.sku} - ${item.name}${item.color ? ` / ${item.color}` : ''}${item.size ? ` / ${item.size}` : ''}`,
     value: item.id
   }))
 )
@@ -165,12 +177,7 @@ function movementTypeMeta(value) {
 }
 
 async function loadOptions() {
-  const [productResult, warehouseResult] = await Promise.all([
-    productApi.page({
-      page: 1,
-      size: 200,
-      status: 'ACTIVE'
-    }),
+  const [warehouseResult] = await Promise.all([
     warehouseApi.page({
       page: 1,
       size: 200,
@@ -178,8 +185,36 @@ async function loadOptions() {
     })
   ])
 
-  products.value = productResult.records || []
   warehouses.value = warehouseResult.records || []
+  await searchProducts()
+}
+
+async function searchProducts(keyword = '') {
+  const requestId = ++productSearchRequestId
+  productLoading.value = true
+
+  try {
+    const result = await productApi.page({
+      page: 1,
+      size: 100,
+      status: 'ACTIVE',
+      keyword: keyword?.trim()
+    })
+
+    if (requestId === productSearchRequestId) {
+      products.value = result.records || []
+    }
+  } finally {
+    if (requestId === productSearchRequestId) {
+      productLoading.value = false
+    }
+  }
+}
+
+function handleProductVisibleChange(visible) {
+  if (visible && !products.value.length) {
+    searchProducts()
+  }
 }
 
 async function loadList() {
